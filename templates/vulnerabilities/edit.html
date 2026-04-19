@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "macros/cvss.html" import render as cvss_table %}
+
+{% block title %}Edit Vulnerability{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/cvss_shared.css">
+<link rel="stylesheet" href="/static/css/vuln_form.css">
+<script src="/static/tinymce/tinymce.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-header">
+        <h1>Edit Vulnerability</h1>
+        <a href="{{ url_for('vulnerabilities.index') }}" class="btn-secondary">Cancel</a>
+    </div>
+
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-card">
+
+            <h2 class="form-section-title">General</h2>
+            <div class="input-row">
+                <label class="label-input">
+                    Name
+                    <input type="text" name="name" required value="{{ vuln.name }}">
+                </label>
+                <label class="label-input">
+                    Classification
+                    <input type="text" name="classification" value="{{ vuln.classification or '' }}">
+                </label>
+                <label class="label-input">
+                    Category
+                    <select name="category_id">
+                        <option value="">— None —</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if vuln.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+
+            <h2 class="form-section-title">Description</h2>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>Description</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="description" name="description">{{ vuln.description or '' }}</textarea>
+                </div>
+            </div>
+
+            <h2 class="form-section-title">CVSS Score</h2>
+            {{ cvss_table(cvss) }}
+            <input type="hidden" name="cvss_vector" id="cvss_vector" value="{{ vuln.cvss_vector or '' }}">
+            <input type="hidden" name="cvss_score" id="cvss_score" value="{{ vuln.cvss_score or 0.0 }}">
+            <input type="hidden" name="severity" id="severity" value="{{ vuln.severity or 'NONE' }}">
+
+            <h2 class="form-section-title">Remediation</h2>
+            <div class="input-row">
+                <label class="label-input">
+                    Complexity
+                    <select name="remediation_complexity">
+                        <option value="Low" {% if vuln.remediation_complexity == 'Low' %}selected{% endif %}>Low</option>
+                        <option value="Medium" {% if vuln.remediation_complexity == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="High" {% if vuln.remediation_complexity == 'High' %}selected{% endif %}>High</option>
+                    </select>
+                </label>
+                <label class="label-input">
+                    Priority
+                    <select name="remediation_priority">
+                        <option value="Low" {% if vuln.remediation_priority == 'Low' %}selected{% endif %}>Low</option>
+                        <option value="Medium" {% if vuln.remediation_priority == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="High" {% if vuln.remediation_priority == 'High' %}selected{% endif %}>High</option>
+                        <option value="Critical" {% if vuln.remediation_priority == 'Critical' %}selected{% endif %}>Critical</option>
+                    </select>
+                </label>
+            </div>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>Remediation</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="remediation" name="remediation">{{ vuln.remediation or '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('vulnerabilities.index') }}" class="btn-secondary">Cancel</a>
+                <button type="submit">Save Changes</button>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script src="/static/js/toggle_editor.js"></script>
+<script type="module" src="/static/js/vuln_form.js"></script>
+{% endblock %}

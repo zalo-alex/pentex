@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Templates{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/templates.css">
+{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <div class="page-header">
+        <h1>Report Templates</h1>
+    </div>
+
+    <div class="list-card">
+        {% if templates %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Errors</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tpl in templates %}
+                {% if tpl.result %}
+                <tr class="template-header-row" onclick="toggleErrors(this)">
+                    <td>{{ tpl.filename }}</td>
+                    <td>{{ tpl.result|length }}</td>
+                    <td><span class="collapse-icon">&#9654;</span></td>
+                </tr>
+                {% for error in tpl.result %}
+                <tr class="template-error-row collapsed">
+                    <td colspan="3">
+                        {% set ns = namespace(line=error.line | replace("<", "&lt;") | replace(">", "&gt;")) %}
+                        {% for val in error.matches %}
+                            {% set ns.line = ns.line | replace(val, "<b>" + val + "</b>") %}
+                        {% endfor %}
+                        <pre class="template-error">{{error.line_index}} | {{ns.line | safe}} <i>{{error.message}}</i></pre>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td>{{ tpl.filename }}</td>
+                    <td>0</td>
+                    <td></td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">No templates found in <code>static/pages/</code>.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="/static/js/templates_page.js"></script>
+{% endblock %}

@@ -1,0 +1,138 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+main {
+    padding-top: 56px;
+}
+
+nav {
+    width: 100%;
+    height: 56px;
+    position: fixed;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    border-bottom: 2px solid #c41e3a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    align-items: center;
+    padding-inline: 24px;
+    gap: 8px;
+
+    .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-right: 8px;
+    }
+
+    .logo {
+        font-weight: 800;
+        font-size: 17px;
+        color: #1a1a2e;
+        text-decoration: none;
+        letter-spacing: -0.3px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .logo-img {
+        height: 28px;
+        width: 28px;
+        object-fit: contain;
+    }
+
+    .nav-context {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #999;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 280px;
+
+        &:not(:empty)::before {
+            content: '/';
+            color: #ccc;
+            flex-shrink: 0;
+        }
+    }
+
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-left: auto;
+
+        a {
+            text-decoration: none;
+            color: #555;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 5px;
+            transition: background .15s, color .15s;
+
+            &:hover {
+                background: #f5f5f5;
+                color: #1a1a2e;
+            }
+        }
+
+        .nav-admin {
+            color: #c41e3a;
+
+            &:hover {
+                background: #fff0f2;
+                color: #a8192f;
+            }
+        }
+    }
+
+    .nav-profile {
+        text-decoration: none;
+        color: #555;
+        font-size: 13.5px;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 5px;
+        border: 1px solid #e0e0e0;
+        margin-left: 8px;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: background .15s, color .15s, border-color .15s;
+
+        &:hover {
+            background: #f5f5f5;
+            color: #1a1a2e;
+            border-color: #ccc;
+        }
+    }
+}
+
+.flash-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: fixed;
+    right: 16px;
+    top: 68px;
+    z-index: 200;
+
+    .flash {
+        padding: 10px 20px;
+        border-radius: 5px;
+        background: #fff0f2;
+        color: #a8192f;
+        box-shadow: 0 2px 8px rgba(0,0,0,.12);
+        font-size: 13.5px;
+    }
+}

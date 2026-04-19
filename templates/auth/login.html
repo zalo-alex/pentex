@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h1>Sign in to PenTeX</h1>
+
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+
+            <label class="remember">
+                <input type="checkbox" name="remember"> Remember me
+            </label>
+
+            <button type="submit">Sign in</button>
+        </form>
+
+    </div>
+{% endblock %}

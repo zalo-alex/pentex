@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Vulnerabilities{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/list.css">
+{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <div class="page-header">
+        <h1>Vulnerabilities</h1>
+        <a href="{{ url_for('vulnerabilities.new') }}" class="btn-primary">New Vulnerability</a>
+    </div>
+
+    <div class="list-card">
+        {% if vulnerabilities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vuln in vulnerabilities %}
+                {% set sev = vuln.severity or 'INFORMATIONAL' %}
+                <tr>
+                    <td><a href="{{ url_for('vulnerabilities.edit', id=vuln.id) }}">{{ vuln.name }}</a></td>
+                    <td>{{ vuln.category.name if vuln.category else '—' }}</td>
+                    <td>
+                        {% if sev == 'CRITICAL' %}
+                            <span class="badge badge-critical">Critical</span>
+                        {% elif sev == 'HIGH' %}
+                            <span class="badge badge-high">High</span>
+                        {% elif sev == 'MEDIUM' %}
+                            <span class="badge badge-medium">Medium</span>
+                        {% elif sev == 'LOW' %}
+                            <span class="badge badge-low">Low</span>
+                        {% else %}
+                            <span class="badge badge-info">Info</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ vuln.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">No vulnerabilities yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

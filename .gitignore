@@ -1,0 +1,33 @@
+# TinyMCE (large vendor lib)
+tinymce/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Database
+instance/
+*.db
+*.sqlite3
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

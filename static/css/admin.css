@@ -1,0 +1,171 @@
+/* ── Tab bar ── */
+.admin-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 28px;
+}
+.admin-tab {
+    padding: 10px 22px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    user-select: none;
+    transition: color .15s;
+}
+.admin-tab:hover { color: #1a1a2e; }
+.admin-tab.active { color: #c41e3a; border-bottom-color: #c41e3a; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+.invite-flash {
+    background: #e6f7e6;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    word-break: break-all;
+}
+.invite-flash strong { display: block; margin-bottom: 4px; }
+.invite-flash a { color: #166534; font-weight: 600; }
+.badge-admin { background: #ede9fe; color: #6d28d9; }
+.badge-user  { background: #f0f0f0; color: #555; }
+.btn-invite {
+    background: none;
+    border: 1px solid #ddd;
+    color: #555;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-weight: 600;
+    transition: border-color .15s, color .15s;
+}
+.btn-invite:hover { border-color: #c41e3a; color: #c41e3a; }
+.actions-col { width: 160px; text-align: right; }
+.btn-passwd {
+    background: none;
+    border: 1px solid #ddd;
+    color: #555;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-weight: 600;
+    transition: border-color .15s, color .15s;
+    margin-right: 4px;
+}
+.btn-passwd:hover { border-color: #c41e3a; color: #c41e3a; }
+
+/* ── Log badges ── */
+.log-action {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    font-family: monospace;
+}
+.log-LOGIN            { background: #e6f7e6; color: #166534; }
+.log-LOGIN_FAILED     { background: #fde8e8; color: #b91c1c; }
+.log-LOGOUT           { background: #f0f0f0; color: #555; }
+.log-REPORT_CREATE    { background: #e0f0ff; color: #1d4ed8; }
+.log-REPORT_DELETE    { background: #fde8e8; color: #b91c1c; }
+.log-VULN_CREATE      { background: #e0f0ff; color: #1d4ed8; }
+.log-VULN_EDIT        { background: #fef9e6; color: #b45309; }
+.log-USER_CREATE      { background: #ede9fe; color: #6d28d9; }
+.log-USER_DELETE      { background: #fde8e8; color: #b91c1c; }
+.log-PASSWORD_CHANGE  { background: #fef9e6; color: #b45309; }
+.log-PASSWORD_RESET   { background: #fef9e6; color: #b45309; }
+.log-CATEGORY_CREATE  { background: #e0f0ff; color: #1d4ed8; }
+.log-CATEGORY_DELETE  { background: #fde8e8; color: #b91c1c; }
+.log-detail { font-size: 12px; color: #888; }
+.log-ip     { font-size: 11px; color: #aaa; font-family: monospace; }
+.log-ts     { font-size: 12px; color: #aaa; white-space: nowrap; }
+
+/* ── Log filters ── */
+.log-filters {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.log-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.log-filters input,
+.log-filters select {
+    padding: 7px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+    min-width: 140px;
+    font-family: inherit;
+}
+.log-filters input:focus,
+.log-filters select:focus { border-color: #c41e3a; box-shadow: 0 0 0 3px rgba(196,30,58,.1); }
+.log-filters .btn-filter {
+    padding: 7px 16px;
+    background: #c41e3a;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+.log-filters .btn-filter:hover { background: #a8192f; }
+.log-filters .btn-clear {
+    padding: 7px 12px;
+    background: none;
+    color: #888;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1;
+}
+.log-filters .btn-clear:hover { border-color: #aaa; color: #555; }
+
+/* ── Pagination ── */
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    justify-content: center;
+}
+.pagination a, .pagination span {
+    padding: 5px 11px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid #e0e0e0;
+    color: #555;
+    transition: border-color .15s, color .15s;
+}
+.pagination a:hover { border-color: #c41e3a; color: #c41e3a; }
+.pagination span.current { background: #c41e3a; color: #fff; border-color: #c41e3a; }
+.pagination span.disabled { color: #ccc; cursor: default; }
+.log-meta { font-size: 12px; color: #aaa; margin-bottom: 10px; }

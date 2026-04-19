@@ -1,0 +1,84 @@
+/* ── Collaborative presence styles ─────────────────────────────────────── */
+
+/* Presence bar — avatar row in the nav */
+.collab-presence {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.collab-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0;
+    cursor: default;
+    border: 2px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform .15s, box-shadow .15s;
+    flex-shrink: 0;
+}
+
+.collab-avatar:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+
+/* Thin white ring marks the current user */
+.collab-avatar-me {
+    border-color: rgba(255,255,255,.75);
+    outline: 1px solid rgba(0,0,0,.15);
+}
+
+/* ── Nav-tab section dots ─────────────────────────────────────────────── */
+
+/* Nav buttons need relative positioning for dot placement */
+.nav .button {
+    position: relative;
+}
+
+.collab-nav-dot {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* ── Field focus indicator ─────────────────────────────────────────────── */
+
+/* Pulsing dot that appears next to a locked input */
+.collab-field-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--collab-color, #888);
+    vertical-align: middle;
+    margin-left: 6px;
+    animation: collab-pulse 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes collab-pulse {
+    0%, 100% { opacity: 1;   transform: scale(1);    }
+    50%       { opacity: .35; transform: scale(.75); }
+}
+
+/* Locked / disabled input styling */
+[data-collab-locked] {
+    cursor: not-allowed !important;
+    background: #f4f4f4 !important;
+    color: #888 !important;
+    user-select: none;
+}

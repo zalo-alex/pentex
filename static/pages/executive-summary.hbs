@@ -1,0 +1,48 @@
+<page class="executive-summary-page">
+    <h1>Executive Summary</h1>
+
+    <h2>Summary</h2>
+    <p>To assess the security posture of <b>{{targetName}}</b>, a cybersecurity audit has been conducted. This audit was conducted on the {{env}} environment.</p>
+
+    {{#if securityLevel}}
+    <p>The overall impact on the security level of the audited system for <b>{{targetName}}</b> is appreciated to <span class="sev-badge sev-{{securityLevel}}">{{securityLevel}}</span></p>
+    {{/if}}
+
+    <p>Multiple vulnerabilities were identified. Exploiting found vulnerabilities might result in the following risks:</p>
+
+    {{#if risks}}
+    <div class="risk-list">
+        {{{risks}}}
+    </div>
+    {{/if}}
+
+    {{#if actionPlan}}
+    <p>As a result of this audit, the following action plan is suggested:</p>
+    <div class="action-plan-list">
+        {{{actionPlan}}}
+    </div>
+    {{/if}}
+
+    <p>The hardening measures are also to be taken into account in order to improve the overall security of the exposed IS.</p>
+
+    {{#if strength}}
+    <h2>Strengths of the Tested Perimeter</h2>
+    <div class="strength-list">
+        {{{strength}}}
+    </div>
+    {{/if}}
+
+    <h2>Vulnerabilities Abstract</h2>
+    <table id="vulnerabilities-abstract">
+        <tr>
+            <th>Vulnerability</th>
+            <th>Severity</th>
+        </tr>
+        {{#findings}}
+        <tr>
+            <td><a href="#vuln-{{index}}">{{name}}</a></td>
+            <td><span class="vuln-abstract-severity"><span class="vuln-abstract-score">{{cvss}}/10.0</span> <span class="sev-badge sev-{{severityLevel}}">{{severity}}</span></span></td>
+        </tr>
+        {{/findings}}
+    </table>
+</page>

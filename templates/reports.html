@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
+<link rel="stylesheet" href="/static/css/reports.css">
+{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <div class="page-header">
+        <h1>Reports</h1>
+        <button class="btn-primary" onclick="openNewReportDialog()">New Report</button>
+    </div>
+
+    <div class="list-card">
+        {% if reports %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Client</th>
+                    <th>Created</th>
+                    <th class="actions-col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>
+                        <a href="/reports/{{ report.id }}">{{ report.name }}</a>
+                        {% if report.owners | length > 1 %}
+                        <span class="badge-shared" title="{{ report.owners | map(attribute='username') | join(', ') }}">Shared</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ report.category.name if report.category else '—' }}</td>
+                    <td>{{ report.client or '—' }}</td>
+                    <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="actions-col">
+                        <button class="btn-delete" onclick="deleteReport({{ report.id }}, this)" title="Delete">×</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">No reports yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="dialog-container" id="newReportDialog" onclick="if(event.target===this)closeNewReportDialog()">
+    <div class="dialog">
+        <h3>New Report</h3>
+        <input type="text" id="newReportName" placeholder="Report name" autofocus>
+        <select id="newReportCategory">
+            <option value="">— No category —</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="closeNewReportDialog()">Cancel</button>
+            <button class="btn-primary" onclick="createReport()">Create</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/reports.js"></script>
+{% endblock %}

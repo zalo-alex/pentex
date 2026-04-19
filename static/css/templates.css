@@ -1,0 +1,40 @@
+.template-header-row {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover td {
+        background: #fafafa;
+    }
+}
+
+.collapse-icon {
+    display: inline-block;
+    font-size: 10px;
+    color: #888;
+    transition: transform .15s;
+}
+
+.template-error-row {
+    &.collapsed {
+        display: none;
+    }
+
+    td {
+        padding: 0px 20px;
+        border: 0;
+
+        .template-error {
+            margin: 0px;
+            color: #b41d1d;
+
+            b {
+                text-decoration: underline;
+            }
+
+            i {
+                color: #1a1a1a;
+                font-size: 12px;
+            }
+        }
+    }
+}

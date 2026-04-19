@@ -1,0 +1,144 @@
+/* ── Collapsible editor sections ── */
+
+.editor-section {
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    cursor: pointer;
+    user-select: none;
+    transition: background .2s;
+
+    span:first-child {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1a1a2e;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    &:hover { background: #f0f0f0; }
+}
+
+.editor-toggle {
+    font-size: 12px;
+    color: #888;
+    transition: transform .2s;
+}
+
+.editor-content {
+    background: #fff;
+}
+
+.editor-content .tox-tinymce {
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+.editor-section.collapsed .editor-header {
+    border-bottom: none;
+}
+
+.tox-tinymce {
+    border-radius: 6px !important;
+    border-color: #ddd !important;
+}
+
+/* ── CVSS ── */
+
+.cvss-section {
+    margin: 16px 0;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.cvss-result {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.cvss-score {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    min-width: 50px;
+}
+
+.cvss-severity {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    &[data-severity="none"]     { background: #e0e0e0; color: #666; }
+    &[data-severity="low"]      { background: #4caf50; color: #fff; }
+    &[data-severity="medium"]   { background: #ff9800; color: #fff; }
+    &[data-severity="high"]     { background: #f44336; color: #fff; }
+    &[data-severity="critical"] { background: #9c27b0; color: #fff; }
+}
+
+.cvss-vector {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #666;
+    background: #e8e8e8;
+    padding: 6px 12px;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.cvss-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.cvss-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.metric-label {
+    font-size: 11px;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-buttons {
+    display: flex;
+    gap: 4px;
+
+    button {
+        flex: 1;
+        padding: 6px 8px;
+        font-size: 11px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        color: #666;
+        cursor: pointer;
+        transition: all .15s;
+
+        &:hover { border-color: #c41e3a; color: #c41e3a; }
+        &.active { background: #c41e3a; border-color: #c41e3a; color: #fff; }
+    }
+}

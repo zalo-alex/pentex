@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/profile.css">
+{% endblock %}
+
+{% block nav_title %}Profile{% endblock %}
+
+{% block content %}
+<div class="list-page">
+    <div class="page-header">
+        <h1>{{ current_user.username }}</h1>
+    </div>
+
+    <div class="profile-grid">
+        <div class="profile-card">
+            <h2>Change Password</h2>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="password">
+                <label for="current_password">Current password</label>
+                <input type="password" id="current_password" name="current_password" autocomplete="current-password" required>
+                <label for="new_password">New password</label>
+                <input type="password" id="new_password" name="new_password" autocomplete="new-password" required>
+                <label for="confirm_password">Confirm new password</label>
+                <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
+                <div class="form-footer">
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="profile-card danger-card">
+            <p>End your current session.</p>
+            <a href="{{ url_for('auth.logout') }}" class="btn-danger">Sign out</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

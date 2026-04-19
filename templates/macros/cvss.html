@@ -1,0 +1,74 @@
+{% macro render(m=None) %}
+{% set m = m or {'AV': 'N', 'AC': 'L', 'PR': 'N', 'UI': 'N', 'S': 'U', 'C': 'N', 'I': 'N', 'A': 'N'} %}
+<div class="cvss-section">
+    <div class="cvss-result">
+        <span class="cvss-score">0.0</span>
+        <span class="cvss-severity" data-severity="none">NONE</span>
+        <span class="cvss-vector">CVSS:3.1/AV:{{ m.AV }}/AC:{{ m.AC }}/PR:{{ m.PR }}/UI:{{ m.UI }}/S:{{ m.S }}/C:{{ m.C }}/I:{{ m.I }}/A:{{ m.A }}</span>
+    </div>
+    <div class="cvss-metrics">
+        <div class="cvss-metric">
+            <span class="metric-label">Attack Vector</span>
+            <div class="metric-buttons" data-metric="AV">
+                <button type="button" {% if m.AV == 'N' %}class="active"{% endif %} data-value="N">Network</button>
+                <button type="button" {% if m.AV == 'A' %}class="active"{% endif %} data-value="A">Adjacent</button>
+                <button type="button" {% if m.AV == 'L' %}class="active"{% endif %} data-value="L">Local</button>
+                <button type="button" {% if m.AV == 'P' %}class="active"{% endif %} data-value="P">Physical</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Attack Complexity</span>
+            <div class="metric-buttons" data-metric="AC">
+                <button type="button" {% if m.AC == 'L' %}class="active"{% endif %} data-value="L">Low</button>
+                <button type="button" {% if m.AC == 'H' %}class="active"{% endif %} data-value="H">High</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Privileges Required</span>
+            <div class="metric-buttons" data-metric="PR">
+                <button type="button" {% if m.PR == 'N' %}class="active"{% endif %} data-value="N">None</button>
+                <button type="button" {% if m.PR == 'L' %}class="active"{% endif %} data-value="L">Low</button>
+                <button type="button" {% if m.PR == 'H' %}class="active"{% endif %} data-value="H">High</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">User Interaction</span>
+            <div class="metric-buttons" data-metric="UI">
+                <button type="button" {% if m.UI == 'N' %}class="active"{% endif %} data-value="N">None</button>
+                <button type="button" {% if m.UI == 'R' %}class="active"{% endif %} data-value="R">Required</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Scope</span>
+            <div class="metric-buttons" data-metric="S">
+                <button type="button" {% if m.S == 'U' %}class="active"{% endif %} data-value="U">Unchanged</button>
+                <button type="button" {% if m.S == 'C' %}class="active"{% endif %} data-value="C">Changed</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Confidentiality</span>
+            <div class="metric-buttons" data-metric="C">
+                <button type="button" {% if m.C == 'N' %}class="active"{% endif %} data-value="N">None</button>
+                <button type="button" {% if m.C == 'L' %}class="active"{% endif %} data-value="L">Low</button>
+                <button type="button" {% if m.C == 'H' %}class="active"{% endif %} data-value="H">High</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Integrity</span>
+            <div class="metric-buttons" data-metric="I">
+                <button type="button" {% if m.I == 'N' %}class="active"{% endif %} data-value="N">None</button>
+                <button type="button" {% if m.I == 'L' %}class="active"{% endif %} data-value="L">Low</button>
+                <button type="button" {% if m.I == 'H' %}class="active"{% endif %} data-value="H">High</button>
+            </div>
+        </div>
+        <div class="cvss-metric">
+            <span class="metric-label">Availability</span>
+            <div class="metric-buttons" data-metric="A">
+                <button type="button" {% if m.A == 'N' %}class="active"{% endif %} data-value="N">None</button>
+                <button type="button" {% if m.A == 'L' %}class="active"{% endif %} data-value="L">Low</button>
+                <button type="button" {% if m.A == 'H' %}class="active"{% endif %} data-value="H">High</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

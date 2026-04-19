@@ -1,0 +1,12 @@
+.actions-col { width: 50px; text-align: center; }
+.badge-shared {
+    display: inline-block;
+    margin-left: 7px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #c41e3a;
+    border: 1px solid #c41e3a;
+    border-radius: 10px;
+    vertical-align: middle;
+}

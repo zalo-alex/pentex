@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}Editor{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/zalo-alex/zutils@main/lib/zpages.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/gh/zalo-alex/zutils@main/lib/zprocess.js"></script>
+    <link rel="stylesheet" href="/static/css/cvss_shared.css">
+    <link rel="stylesheet" href="/static/css/editor.css">
+    <link rel="stylesheet" href="/static/css/collab.css">
+    <link rel="stylesheet" href="/static/pages/styles.css">
+    <script src="/static/js/socket.io.min.js"></script>
+    <script src="/static/tinymce/tinymce.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <script>
+        require.config({
+            paths: {
+                vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'
+            }
+        });
+        const _currentUserId = {{ current_user.id }};
+    </script>
+{% endblock %}
+
+{% block nav_title %}Editing '{{ report.name }}'<div id="collabPresence" class="collab-presence"></div><button id="navSaveBtn" class="nav-save-btn" onclick="onServerSaveClick()" style="display:none"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg></button>{% endblock %}
+
+{% block content %}
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+    <div class="sidebar">
+        <div class="nav">
+            <button class="button active">General</button>
+            <button class="button">Executive</button>
+            <button class="button">Traces</button>
+            <button class="button">Discovery</button>
+            <button class="button">Observations</button>
+            <button class="button">Findings</button>
+            <button class="button">Project</button>
+        </div>
+
+        <div class="page general">
+            <h2>Project Information</h2>
+            <div class="section-card">
+                <div class="input-row">
+                    <label class="label-input">
+                        Client Name
+                        <input type="text" placeholder="Enter client name" data-bind="global.clientName">
+                    </label>
+                    <label class="label-input">
+                        Target Name
+                        <input type="text" placeholder="Enter application name" data-bind="global.targetName">
+                    </label>
+                    <label class="label-input">
+                        Test type
+                        <select data-bind="global.testType">
+                            <option value="Web">Web</option>
+                            <option value="Mobile">Mobile</option>
+                            <option value="Infrastructure">Infrastructure</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="input-row">
+                    <label class="label-input">
+                        Testing Approach
+                        <div class="approach-buttons">
+                            <label class="approach-btn">Black Box<input type="checkbox" data-bind="global.blackBox"></button></label>
+                            <label class="approach-btn">Gray Box<input type="checkbox" data-bind="global.grayBox"></button></label>
+                            <label class="approach-btn">White Box<input type="checkbox" data-bind="global.whiteBox"></button></label>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <h2>Auditors</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item" z="auditor" data-list-input="auditors" data-bind="global.auditors">
+                        <input type="text" data-bind="fullName" placeholder="Full name">
+                        <input type="text" data-bind="email" placeholder="Email">
+                        <button class="remove-abbr" onclick="removeListItem('auditors', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('auditors')" title="Add auditor"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Timeline</h2>
+            <div class="section-card">
+                <div class="input-row">
+                    <label class="label-input">
+                        Kick off meeting
+                        <input type="text" placeholder="Enter a date" data-bind="global.keekOffMeetingDate">
+                    </label>
+                    <label class="label-input">
+                        Start of tests
+                        <input type="text" placeholder="Enter a date" data-bind="global.startOfTestsDate">
+                    </label>
+                    <label class="label-input">
+                        End of tests
+                        <input type="text" placeholder="Enter a date" data-bind="global.endOfTestsDate">
+                    </label>
+                </div>
+            </div>
+
+            <h2>Scope</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item" z="scope" data-list-input="scopes" data-bind="global.scopes">
+                        <input type="text" data-bind="name" placeholder="Name of the perimeter">
+                        <button class="remove-abbr" onclick="removeListItem('scopes', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('scopes')" title="Add scope"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Test Access</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item" z="testAccess" data-list-input="testAccess" data-bind="global.testAccess">
+                        <input type="text" data-bind="identifier" placeholder="Identifier">
+                        <input type="text" data-bind="role" placeholder="Role">
+                        <input type="text" data-bind="resource" placeholder="Resource">
+                        <button class="remove-abbr" onclick="removeListItem('testAccess', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('testAccess')" title="Add access"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Diffusion Table</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item diffusion-row-item" z="diffusionRow" data-list-input="diffusionTable" data-bind="global.diffusionTable">
+                        <input type="text" data-bind="company" placeholder="Company">
+                        <input type="text" data-bind="name" placeholder="Full name">
+                        <input type="text" data-bind="role" placeholder="Role">
+                        <input type="text" data-bind="email" placeholder="Email">
+                        <button class="remove-abbr" onclick="removeListItem('diffusionTable', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('diffusionTable')" title="Add row"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Revisions table</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item version-history-item" z="versionHistoryRow" data-list-input="versionHistory" data-bind="global.versionHistory">
+                        <input type="text" data-bind="version" placeholder="1.0" class="version-col">
+                        <input type="text" data-bind="date" placeholder="Date" class="date-col">
+                        <input type="text" data-bind="author" placeholder="Author">
+                        <input type="text" data-bind="changes" placeholder="Modified content">
+                        <input type="text" data-bind="description" placeholder="Description">
+                        <button class="remove-abbr" onclick="removeListItem('versionHistory', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('versionHistory')" title="Add version"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Abbreviations</h2>
+            <div class="section-card">
+                <div class="list-input-container">
+                    <div class="list-input-item abbreviation-item" z="abbreviation"  data-list-input="abbreviations"  data-bind="global.abbreviations">
+                        <input type="text" data-bind="abbreviation" placeholder="e.g. API">
+                        <input type="text" data-bind="definition" placeholder="e.g. Application Programming Interface">
+                        <button class="remove-abbr" onclick="removeListItem('abbreviations', '$(zid)')">×</button>
+                    </div>
+                </div>
+                <button onclick="addListItem('abbreviations')" title="Add abbreviation"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            </div>
+
+            <h2>Owners</h2>
+            <div class="section-card">
+                <div id="ownersList" class="list-input-container"></div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <select id="ownerSelectInput" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                        <option value="">Select a user to add…</option>
+                    </select>
+                    <button onclick="addOwner()" title="Add owner"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <script>const _reportId = {{ report.id }};</script>
+        <script src="/static/js/editor_owners.js"></script>
+
+        <div class="page executive" style="display: none;">
+            <h2>Testing Environment</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Environment
+                    <select data-bind="global.env">
+                        <option value="">Select environment</option>
+                        <option value="development">Development</option>
+                        <option value="testing">Testing</option>
+                        <option value="quality assurance">Quality Assurance</option>
+                        <option value="integration (INT)">Integration (INT)</option>
+                        <option value="pre-production">Pre-production</option>
+                        <option value="user acceptance testing (UAT)">User Acceptance Testing (UAT)</option>
+                        <option value="sandbox">Sandbox</option>
+                        <option value="hotfix / patch">Hotfix / Patch</option>
+                        <option value="security">Security</option>
+                        <option value="production">Production</option>
+                    </select>
+                </label>
+            </div>
+
+            <h2>Security Impact</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Security Level Impact
+                    <select data-bind="global.securityLevel">
+                        <option value="">Select level</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                        <option value="INFORMATIONAL">Informational</option>
+                    </select>
+                </label>
+            </div>
+
+            <h2>Risks</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Risks Identified
+                    <textarea placeholder="Describe the risks identified during the audit" data-bind="global.risks"></textarea>
+                </label>
+            </div>
+
+            <h2>Action Plan</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Recommended Action Plan
+                    <textarea placeholder="Describe the suggested action plan" data-bind="global.actionPlan"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div class="page traces" style="display: none;">
+            <h2>Accounts</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Accounts Created
+                    <textarea placeholder="List accounts created during the audit" data-bind="global.account"></textarea>
+                </label>
+            </div>
+
+            <h2>Injections</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Injections Added
+                    <textarea placeholder="Describe injections added on the application" data-bind="global.injection"></textarea>
+                </label>
+            </div>
+
+            <h2>Uploads</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Uploaded Files
+                    <textarea placeholder="List files uploaded on the application" data-bind="global.upload"></textarea>
+                </label>
+            </div>
+
+            <h2>Other</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Other Traces
+                    <textarea placeholder="Describe other traces created while auditing" data-bind="global.traces"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div class="page discovery" style="display: none;">
+            <h2>Application</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Noteworthy Elements (Application)
+                    <textarea placeholder="Noteworthy elements of the attack surface (Application)" data-bind="global.discoveryApplication"></textarea>
+                </label>
+            </div>
+
+            <h2>Infrastructure</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Noteworthy Elements (Infrastructure)
+                    <textarea placeholder="Noteworthy elements of the attack surface (Infrastructure)" data-bind="global.discoveryInfra"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div class="page observations" style="display: none;">
+            <h2>Reserves</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Reserves During Audit
+                    <textarea placeholder="Describe any reserves or limitations during the audit" data-bind="global.reserves"></textarea>
+                </label>
+            </div>
+
+            <h2>Strength</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Strength of Tested Perimeter
+                    <textarea placeholder="Describe the strength of the tested perimeter" data-bind="global.strength"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div class="page findings" style="display: none;">
+            <div class="findings-tabs">
+                <div class="findings-tabs-list">
+                    <div class="finding-tab" z="finding-tab">
+                        <span onclick="switchFinding('$(zid)')">$(name)</span>
+                        <button class="remove-finding-tab" onclick="removeFinding('$(zid)')">×</button>
+                    </div>
+                </div>
+                <button class="add-finding-tab" onclick="openAddFindingDialog()">+</button>
+            </div>
+            <div class="findings-list">
+                <div class="finding" z="finding" data-bind="pages.findings">
+                    <div class="finding-db-actions">
+                        <button class="finding-save-back" onclick="saveBackFinding('$(zid)')" title="Save back to vulnerability">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg>
+                        </button>
+                        <button class="finding-save-new" onclick="saveFindingAsNewVuln('$(zid)')" title="Save as new vulnerability">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 7h-2v2h-2v-2h-2V8h2V6h2v2h2v2zM3 7v13a2 2 0 0 0 2 2h13v-2H5V7H3z"/></svg>
+                        </button>
+                    </div>
+                    <div class="input-row">
+                        <label class="label-input">
+                            Name
+                            <input type="text" placeholder="Vulnerability name" data-bind="name" data-after-input="updateFindingName(value, parentBindZid)">
+                        </label>
+                    </div>
+                    <div class="editor-section">
+                        <div class="editor-header" onclick="toggleEditor(this)">
+                            <span>Description</span>
+                            <span class="editor-toggle">▼</span>
+                        </div>
+                        <div class="editor-content">
+                            <textarea id="desc-$(zid)" placeholder="Describe the vulnerability"></textarea>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <label class="label-input">
+                            Attack Surface
+                            <input type="text" placeholder="Affected components" data-bind="affected">
+                        </label>
+                        <label class="label-input">
+                            Classification
+                            <input type="text" placeholder="Classification" data-bind="classification">
+                        </label>
+                    </div>
+                    <div class="cvss-section" data-finding="$(zid)">
+                        <div class="cvss-result">
+                            <span class="cvss-score">0.0</span>
+                            <span class="cvss-severity" data-severity="none">NONE</span>
+                            <span class="cvss-vector">CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N</span>
+                        </div>
+                        <div class="cvss-metrics">
+                            <div class="cvss-metric">
+                                <span class="metric-label">Attack Vector</span>
+                                <div class="metric-buttons" data-metric="AV">
+                                    <button class="active" data-value="N">Network</button>
+                                    <button data-value="A">Adjacent</button>
+                                    <button data-value="L">Local</button>
+                                    <button data-value="P">Physical</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Attack Complexity</span>
+                                <div class="metric-buttons" data-metric="AC">
+                                    <button class="active" data-value="L">Low</button>
+                                    <button data-value="H">High</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Privileges Required</span>
+                                <div class="metric-buttons" data-metric="PR">
+                                    <button class="active" data-value="N">None</button>
+                                    <button data-value="L">Low</button>
+                                    <button data-value="H">High</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">User Interaction</span>
+                                <div class="metric-buttons" data-metric="UI">
+                                    <button class="active" data-value="N">None</button>
+                                    <button data-value="R">Required</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Scope</span>
+                                <div class="metric-buttons" data-metric="S">
+                                    <button class="active" data-value="U">Unchanged</button>
+                                    <button data-value="C">Changed</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Confidentiality</span>
+                                <div class="metric-buttons" data-metric="C">
+                                    <button class="active" data-value="N">None</button>
+                                    <button data-value="L">Low</button>
+                                    <button data-value="H">High</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Integrity</span>
+                                <div class="metric-buttons" data-metric="I">
+                                    <button class="active" data-value="N">None</button>
+                                    <button data-value="L">Low</button>
+                                    <button data-value="H">High</button>
+                                </div>
+                            </div>
+                            <div class="cvss-metric">
+                                <span class="metric-label">Availability</span>
+                                <div class="metric-buttons" data-metric="A">
+                                    <button class="active" data-value="N">None</button>
+                                    <button data-value="L">Low</button>
+                                    <button data-value="H">High</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <label class="label-input">
+                            Remediation Complexity
+                            <select data-bind="remediationComplexity">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </label>
+                        <label class="label-input">
+                            Remediation Priority
+                            <select data-bind="remediationPriority">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="editor-section">
+                        <div class="editor-header" onclick="toggleEditor(this)">
+                            <span>Remediation</span>
+                            <span class="editor-toggle">▼</span>
+                        </div>
+                        <div class="editor-content">
+                            <textarea id="remed-$(zid)" placeholder="Describe how to fix the vulnerability"></textarea>
+                        </div>
+                    </div>
+                    <div class="editor-section">
+                        <div class="editor-header" onclick="toggleEditor(this)">
+                            <span>Proof of Concept</span>
+                            <span class="editor-toggle">▼</span>
+                        </div>
+                        <div class="editor-content">
+                            <textarea id="poc-$(zid)" placeholder="Steps to reproduce, evidence, screenshots..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="page settings" style="display: none;">
+            <div class="project-actions">
+                <button id="reportSaveBtn" class="project-action" onclick="onServerSaveClick()" id-section="reportSaveSection" style="display:none">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg>
+                    <span>Save to server</span>
+                </button>
+                <button class="project-action" onclick="onOpenClick()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 12H4V8h16v10z"/></svg>
+                    <span>Open file</span>
+                </button>
+                <button class="project-action" onclick="onSaveClick()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.17v4h5v-4h3.17L12 2z"/></svg>
+                    <span>Save as file</span>
+                </button>
+                <button class="project-action" onclick="exportHtml()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5v-2z"/></svg>
+                    <span>Export HTML</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="headers-container">
+
+    </div>
+    <button class="raw-edit-button" z="rawEditButton" onclick="onRawEditButtonClicked(this)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15.7279 9.57627L14.3137 8.16206L5 17.4758V18.89H6.41421L15.7279 9.57627ZM17.1421 8.16206L18.5563 6.74785L17.1421 5.33363L15.7279 6.74785L17.1421 8.16206ZM7.24264 20.89H3V16.6473L16.435 3.21231C16.8256 2.82179 17.4587 2.82179 17.8492 3.21231L20.6777 6.04074C21.0682 6.43126 21.0682 7.06443 20.6777 7.45495L7.24264 20.89Z"></path></svg>
+    </button>
+    <div class="add-finding-dialog-container" id="addFindingDialog" onclick="if(event.target===this)closeAddFindingDialog()">
+        <div class="add-finding-dialog">
+            <div class="add-finding-dialog-header">
+                <h3>Add Finding</h3>
+                <input type="text" id="addFindingSearch" placeholder="Search..." onkeyup="filterAddFindingDialog()" autocomplete="off">
+                <button class="close-dialog" onclick="closeAddFindingDialog()">×</button>
+            </div>
+            <div class="add-finding-dialog-list" id="addFindingDialogList"></div>
+        </div>
+    </div>
+    <div class="raw-edit-dialog-container">
+        <div class="raw-edit-dialog">
+            <button class="close" onclick="onRawEditCloseClicked()">×</button>
+            <div id="editor" style="height:100%;width:100%;"></div>
+        </div>
+    </div>
+    <pages>
+    </pages>
+
+    <script type="module" src="https://cdn.jsdelivr.net/gh/zalo-alex/zutils@main/lib/zealtime.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/gh/zalo-alex/zutils@main/lib/zpages.js"></script>
+    <script src="/static/js/toggle_editor.js"></script>
+    <script type="module" src="/static/js/editor.js" defer></script>
+{% endblock %}

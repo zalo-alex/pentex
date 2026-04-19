@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <header class="dashboard-header">
+        <h1>Welcome back, {{ current_user.username }}!</h1>
+        <p>Manage your penetration test reports and vulnerability database.</p>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ report_count }}</div>
+            <div class="stat-label">Reports</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ vuln_count }}</div>
+            <div class="stat-label">Vulnerabilities</div>
+        </div>
+    </div>
+
+    <div class="dashboard-sections">
+        <section class="recent-reports">
+            <div class="section-header">
+                <h2>Recent Reports</h2>
+                <a href="{{ url_for('reports.index') }}">View All</a>
+            </div>
+            <div class="reports-list">
+                {% if recent_reports %}
+                    {% for report in recent_reports %}
+                    <a href="/reports/{{ report.id }}" class="report-item">
+                        <span class="report-name">{{ report.name }}</span>
+                        <span class="report-date">{{ report.updated_at.strftime('%b %d, %Y') }}</span>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-msg">No reports yet.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="openNewReportDialog()">
+                    <span class="icon">+</span>
+                    <span>New Report</span>
+                </button>
+                <a href="{{ url_for('vulnerabilities.new') }}" class="action-btn">
+                    <span class="icon">🔍</span>
+                    <span>New Vulnerability</span>
+                </a>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="dialog-container" id="newReportDialog" onclick="if(event.target===this)closeNewReportDialog()">
+    <div class="dialog">
+        <h3>New Report</h3>
+        <input type="text" id="newReportName" placeholder="Report name" autofocus>
+        <div class="dialog-actions">
+            <button class="btn-secondary" onclick="closeNewReportDialog()">Cancel</button>
+            <button class="btn-primary" onclick="createReport()">Create</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/index_page.js"></script>
+{% endblock %}

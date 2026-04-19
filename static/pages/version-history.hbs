@@ -1,0 +1,21 @@
+<page class="version-history-page">
+    <h1 no-index>Revisions table</h1>
+    <table>
+        <tr>
+            <th>Version</th>
+            <th>Date</th>
+            <th>Author</th>
+            <th>Modified content</th>
+            <th>Description</th>
+        </tr>
+        {{#versionHistory}}
+        <tr>
+            <td>{{version}}</td>
+            <td>{{date}}</td>
+            <td>{{author}}</td>
+            <td>{{changes}}</td>
+            <td>{{description}}</td>
+        </tr>
+        {{/versionHistory}}
+    </table>
+</page>

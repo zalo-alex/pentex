@@ -1,0 +1,216 @@
+<page class="methodology-page">
+    <h1>Methodology</h1>
+
+    <h2>Testing Approach</h2>
+    {{#blackBox}}
+    <div class="approach-item">
+        <h3>Black Box Testing</h3>
+        <p>The assessor operates with no prior knowledge of the target beyond its IP addresses, URLs, or hardware identifiers — simulating an external attacker. An initial fingerprinting phase is required to discover and understand the attack surface, including open ports, DNS records, filtering equipment, and publicly exposed services. Open Source Intelligence (OSINT) is conducted to detect known vulnerabilities in identified technologies.</p>
+    </div>
+    {{/blackBox}}
+
+    {{#grayBox}}
+    <div class="approach-item">
+        <h3>Gray Box Testing</h3>
+        <p>The assessor has partial knowledge of the target environment, supplemented by information provided by the client (user accounts, documentation, etc.). This enables testing across a broader attack surface including authenticated application actions, file system access, service enumeration, and privilege escalation paths.</p>
+    </div>
+    {{/grayBox}}
+
+    {{#whiteBox}}
+    <div class="approach-item">
+        <h3>White Box Testing</h3>
+        <p>The assessor has full transparency into the system, including access to source code, architecture documentation, credentials, and configuration files. This approach enables thorough analysis of security controls, code-level vulnerabilities, and architectural design flaws.</p>
+    </div>
+    {{/whiteBox}}
+    
+    <p>For this intrusion test, the auditor(s) based their tests and results analysis on the following documents:</p>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Source</th>
+            <th>Link</th>
+        </tr>
+        <tr>
+            <td>Web Security Testing Guide</td>
+            <td>OWASP</td>
+            <td><a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank">WSTG</a></td>
+        </tr>
+        <tr>
+            <td>Web Application Top 10</td>
+            <td>OWASP</td>
+            <td><a href="https://owasp.org/www-project-top-ten/" target="_blank">Top10-2021</a></td>
+        </tr>
+        <tr>
+            <td>API Security Project</td>
+            <td>OWASP</td>
+            <td><a href="https://owasp.org/www-project-api-security/" target="_blank">Top10-2019</a></td>
+        </tr>
+        <tr>
+            <td>Technical Guide to Information Testing and Assessment</td>
+            <td>NIST</td>
+            <td><a href="https://csrc.nist.gov/pubs/sp/800/115/final" target="_blank">SP 800-115</a></td>
+        </tr>
+    </table>
+
+    <h2>Overall Security Level Assessment</h2>
+    <p>The overall security level is determined by analyzing all discovered vulnerabilities and applying a weighted scoring system. The calculation follows these key principles:</p>
+
+    <h3>Classification by CVSS Severity:</h3>
+    <p>Each vulnerability is categorized according to its CVSS (Common Vulnerability Scoring System) rating, using the following severity levels:</p>
+    <table>
+        <tr>
+            <th>Score</th>
+            <th>Category</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td>9.0 &lt; CVSS &lt; 10.0</td>
+            <td><span class="sev-badge sev-critical">CRITICAL</span></td>
+            <td>Critical risk on the information system requiring immediate correction or imposing an immediate shutdown of the service.</td>
+        </tr>
+        <tr>
+            <td>7.0 &lt; CVSS &lt; 8.9</td>
+            <td><span class="sev-badge sev-high">HIGH</span></td>
+            <td>Major risk on the information system requiring a short-term correction.</td>
+        </tr>
+        <tr>
+            <td>4.0 &lt; CVSS &lt; 6.9</td>
+            <td><span class="sev-badge sev-medium">MEDIUM</span></td>
+            <td>Moderate risk on the information system and requiring medium-term correction.</td>
+        </tr>
+        <tr>
+            <td>0.1 &lt; CVSS &lt; 3.9</td>
+            <td><span class="sev-badge sev-low">LOW</span></td>
+            <td>Low risk on the information system and may require correction.</td>
+        </tr>
+        <tr>
+            <td>CVSS = 0.0</td>
+            <td><span class="sev-badge sev-info">INFORMATION</span></td>
+            <td>General recommendations intended to advise on the security of the information system.</td>
+        </tr>
+    </table>
+
+    <h3>Weighted Scoring Formula:</h3>
+    <p>To reflect the significance of higher-severity vulnerabilities, each category is assigned a weight factor, and the overall security score is computed using the following formula:</p>
+    <div class="formula-box">
+        <p class="formula"><i>Weighted Score</i> = (C × 4) + (H × 3) + (M × 2) + (L × 1) / C + H + M + L</p>
+    </div>
+    <div class="formula-legend">
+        <p>Where:</p>
+        <table>
+            <tr>
+                <td><span class="sev-badge sev-critical">C</span></td>
+                <td>Number of Critical vulnerabilities</td>
+                <td><span class="sev-badge sev-medium">M</span></td>
+                <td>Number of Medium vulnerabilities</td>
+            </tr>
+            <tr>
+                <td><span class="sev-badge sev-high">H</span></td>
+                <td>Number of High vulnerabilities</td>
+                <td><span class="sev-badge sev-low">L</span></td>
+                <td>Number of Low vulnerabilities</td>
+            </tr>
+        </table>
+        <p class="text-muted" style="font-size: var(--z-11px); margin-top: var(--z-8px);">Informational findings (CVSS 0.0) are excluded from this calculation as they do not present immediate security risks.</p>
+    </div>
+
+    <h3>Mapping the Weighted Score to Security Levels:</h3>
+    <p>The computed weighted score is then mapped to a qualitative security level, which provides a high-level assessment of the system's overall security posture:</p>
+    <table>
+        <tr>
+            <th>Weighted Score</th>
+            <th>Overall Security Level</th>
+        </tr>
+        <tr>
+            <td>3.5 - 4.0</td>
+            <td><span class="sev-badge sev-critical">CRITICAL</span></td>
+        </tr>
+        <tr>
+            <td>2.5 - 3.4</td>
+            <td><span class="sev-badge sev-high">HIGH</span></td>
+        </tr>
+        <tr>
+            <td>1.5 - 2.4</td>
+            <td><span class="sev-badge sev-medium">MEDIUM</span></td>
+        </tr>
+        <tr>
+            <td>0.5 - 1.4</td>
+            <td><span class="sev-badge sev-low">LOW</span></td>
+        </tr>
+        <tr>
+            <td>0 - 0.4</td>
+            <td><span class="sev-badge sev-info">INFORMATIONAL</span></td>
+        </tr>
+    </table>
+
+    <h2>Structure for Vulnerability Presentation</h2>
+    <table class="vuln-structure-table">
+        <tr>
+            <td class="label-cell">Description</td>
+            <td>Short description of the vulnerability.</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Attack surface</td>
+            <td>Specifies precisely the vulnerable element (IP, parameter, etc.).</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Reference(s)</td>
+            <td>Terminology attributed to the flaw (CVE, CWE or OWASP code, when relevant).</td>
+        </tr>
+        <tr>
+            <td class="label-cell">Severity</td>
+            <td>
+                <p>SERMA Safety &amp; Security use a <u>c</u>ommon <u>V</u>ulnerability <u>S</u>coring <u>S</u>ystem) in its latest version. This standard is developed by the FIRST (<b>F</b>orum of <b>I</b>ncident <b>R</b>esponse and <b>S</b>ecurity <b>T</b>eams) and is internationally recognized.</p>
+                <div class="severity-level">
+                    <span class="sev-badge sev-info">INFORMATION</span>: Score 0.0<br>
+                    General recommendations not associated with vulnerabilities and intended to advise you on the security of your information system.
+                </div>
+                <div class="severity-level">
+                    <span class="sev-badge sev-low">LOW</span>: Score between 0.1 and 3.9<br>
+                    Low risk on the information system and may require correction.
+                </div>
+                <div class="severity-level">
+                    <span class="sev-badge sev-medium">MEDIUM</span>: Score between 4.0 and 6.9<br>
+                    Moderate risk on the information system and requiring medium-term correction.
+                </div>
+                <div class="severity-level">
+                    <span class="sev-badge sev-high">HIGH</span>: Score between 7.0 and 8.9<br>
+                    Major risk on the information system requiring a short-term correction.
+                </div>
+                <div class="severity-level">
+                    <span class="sev-badge sev-critical">CRITICAL</span>: Score between 9.0 and 10.0<br>
+                    Critical risk on the information system requiring immediate correction or imposing an immediate shutdown of the service.
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">Impact(s)</td>
+            <td>
+                <p>Consequences of the vulnerability exploitation on your information system.</p>
+                <div class="cia-triad">
+                    <div class="cia-item">
+                        <div class="cia-header">Confidentiality</div>
+                        <div class="cia-icon">&#128065;</div>
+                        <div class="cia-value cia-none">None</div>
+                    </div>
+                    <div class="cia-item">
+                        <div class="cia-header">Integrity</div>
+                        <div class="cia-icon">&#9997;</div>
+                        <div class="cia-value cia-low">Low</div>
+                    </div>
+                    <div class="cia-item">
+                        <div class="cia-header">Availability</div>
+                        <div class="cia-icon">&#9881;</div>
+                        <div class="cia-value cia-high">High</div>
+                    </div>
+                </div>
+                <p>Other impacts:<br>Financial, legal, reputation, business</p>
+            </td>
+        </tr>
+        <tr>
+            <td class="label-cell">Remediation</td>
+            <td>Solutions to resolve the vulnerability and improve the level of security temporarily or permanently.</td>
+        </tr>
+    </table>
+    <p>Then follows elements of proof that the vulnerability exists (screenshots, scenarios, impacted URLs, etc.).</p>
+</page>

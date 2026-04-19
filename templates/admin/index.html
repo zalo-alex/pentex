@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Admin{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block nav_title %}Admin{% endblock %}
+
+{% block content %}
+<div class="list-page">
+
+    <div class="admin-tabs">
+        <div class="admin-tab" data-tab="users">Users</div>
+        <div class="admin-tab" data-tab="categories">Categories</div>
+        <div class="admin-tab" data-tab="logs">Logs</div>
+    </div>
+
+    <!-- ── Users ── -->
+    <div class="tab-panel" id="tab-users">
+        <div class="page-header">
+            <h1>Users</h1>
+            <button class="btn-primary" onclick="openNewUserDialog()">Create User</button>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                {% if category == 'invite' %}
+                    <div class="invite-flash">
+                        <strong>Invite link — copy and send to the user:</strong>
+                        <a href="{{ message }}" target="_blank">{{ message }}</a>
+                        <button class="btn-invite" style="margin-left:8px" onclick="copyInvite('{{ message }}')">Copy</button>
+                    </div>
+                {% else %}
+                    <div class="flash">{{ message }}</div>
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+
+        <div class="list-card">
+            {% if users %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Invite</th>
+                        <th class="actions-col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>
+                            {% if user.is_admin %}
+                                <span class="badge badge-admin">Admin</span>
+                            {% else %}
+                                <span class="badge badge-user">User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pending_invites.get(user.id) %}
+                                <span style="font-size:12px;color:#888;">pending</span>
+                                <button class="btn-invite" onclick="copyInvite('{{ url_for('admin_bp.set_password', token=pending_invites[user.id], _external=True) }}')">Copy link</button>
+                            {% elif not user.password_hash %}
+                                <span style="font-size:12px;color:#aaa;">no password set</span>
+                            {% else %}
+                                <span style="font-size:12px;color:#aaa;">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions-col">
+                            <button class="btn-passwd" onclick="openChangePasswordDialog({{ user.id }}, '{{ user.username }}')">Set password</button>
+                            {% if not user.is_admin %}
+                            <form method="post" action="{{ url_for('admin_bp.delete_user', user_id=user.id) }}" style="display:inline" onsubmit="return confirm('Delete user {{ user.username }}?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn-delete" type="submit" title="Delete">×</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">No users found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Categories ── -->
+    <div class="tab-panel" id="tab-categories">
+        <div class="page-header">
+            <h1>Categories</h1>
+            <button class="btn-primary" onclick="openNewCategoryDialog()">New Category</button>
+        </div>
+        <div class="list-card">
+            {% if categories %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="actions-col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                    <tr>
+                        <td>{{ cat.name }}</td>
+                        <td class="actions-col">
+                            <form method="post" action="{{ url_for('admin_bp.delete_category', cat_id=cat.id) }}"
+                                  style="display:inline" onsubmit="return confirm('Delete category \'{{ cat.name }}\'?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn-delete" type="submit" title="Delete">×</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">No categories yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Logs ── -->
+    <div class="tab-panel" id="tab-logs">
+        <div class="page-header">
+            <h1>Logs</h1>
+        </div>
+
+        <form class="log-filters" method="get" action="{{ url_for('admin_bp.index') }}">
+            <label>
+                Action
+                <select name="log_action">
+                    <option value="">All actions</option>
+                    {% for a in log_actions %}
+                    <option value="{{ a }}" {% if log_action == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Username
+                <input type="text" name="log_user" value="{{ log_user }}" placeholder="Filter by user…" autocomplete="off">
+            </label>
+            <button type="submit" class="btn-filter">Filter</button>
+            {% if log_action or log_user %}
+            <a href="{{ url_for('admin_bp.index') }}#logs" class="btn-clear">Clear</a>
+            {% endif %}
+        </form>
+
+        <p class="log-meta">
+            {{ log_total }} entr{{ 'y' if log_total == 1 else 'ies' }}
+            {% if log_action or log_user %} matching filters{% endif %}
+            — page {{ log_page }} / {{ log_pages }}
+        </p>
+
+        <div class="list-card">
+            {% if logs %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Detail</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="log-ts">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ log.username }}</td>
+                        <td><span class="log-action log-{{ log.action }}">{{ log.action }}</span></td>
+                        <td class="log-detail">{{ log.detail or '' }}</td>
+                        <td class="log-ip">{{ log.ip or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">No logs match the current filters.</p>
+            {% endif %}
+        </div>
+
+        {% if log_pages > 1 %}
+        <div class="pagination">
+            {% if log_page > 1 %}
+            <a href="{{ url_for('admin_bp.index', log_page=log_page-1, log_action=log_action, log_user=log_user) }}#logs">‹ Prev</a>
+            {% else %}
+            <span class="disabled">‹ Prev</span>
+            {% endif %}
+
+            {% for p in range(1, log_pages + 1) %}
+                {% if p == log_page %}
+                    <span class="current">{{ p }}</span>
+                {% elif p <= 3 or p > log_pages - 3 or (p >= log_page - 2 and p <= log_page + 2) %}
+                    <a href="{{ url_for('admin_bp.index', log_page=p, log_action=log_action, log_user=log_user) }}#logs">{{ p }}</a>
+                {% elif p == 4 or p == log_pages - 3 %}
+                    <span class="disabled">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if log_page < log_pages %}
+            <a href="{{ url_for('admin_bp.index', log_page=log_page+1, log_action=log_action, log_user=log_user) }}#logs">Next ›</a>
+            {% else %}
+            <span class="disabled">Next ›</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ── Dialogs ── -->
+<div class="dialog-container" id="newCategoryDialog" onclick="if(event.target===this)closeNewCategoryDialog()">
+    <div class="dialog">
+        <h3>New Category</h3>
+        <form method="post" action="{{ url_for('admin_bp.create_category') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="name" id="newCategoryName" placeholder="Category name" autocomplete="off" required>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeNewCategoryDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="dialog-container" id="newUserDialog" onclick="if(event.target===this)closeNewUserDialog()">
+    <div class="dialog">
+        <h3>Create User</h3>
+        <form method="post" action="{{ url_for('admin_bp.create_user') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="username" id="newUsername" placeholder="Username" autocomplete="off" required>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeNewUserDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Create &amp; get invite link</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="dialog-container" id="changePasswordDialog" onclick="if(event.target===this)closeChangePasswordDialog()">
+    <div class="dialog">
+        <h3 id="changePasswordTitle">Set password</h3>
+        <form method="post" id="changePasswordForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="password" name="password" id="changePasswordInput" placeholder="New password" autocomplete="new-password" required>
+            <input type="password" name="confirm" id="changePasswordConfirm" placeholder="Confirm password" autocomplete="new-password" required style="margin-top:10px">
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeChangePasswordDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+{% endblock %}
