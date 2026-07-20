@@ -1,4 +1,6 @@
 import os
+import sys
+import argparse
 import secrets
 import logging
 from dotenv import load_dotenv
@@ -200,6 +202,27 @@ def handle_disconnect():
             break
 
 
+def _reset_admin_password():
+    with app.app_context():
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            print('[PENTEX] No admin account found.')
+            sys.exit(1)
+        new_password = secrets.token_urlsafe(16)
+        admin_user.set_password(new_password)
+        db.session.commit()
+        print(f'[PENTEX] Admin password reset. New password: {new_password}')
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--reset-admin-password', action='store_true',
+                         help='Reset the admin account password to a new random value and exit.')
+    args = parser.parse_args()
+
+    if args.reset_admin_password:
+        _reset_admin_password()
+        sys.exit(0)
+
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
     socketio.run(app, debug=debug)
