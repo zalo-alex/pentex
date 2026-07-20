@@ -35,6 +35,15 @@ export const getTemplate = (name, index) => {
     return templateCache[cacheKey]
 }
 
+export const getRawTemplate = (name, index) => {
+    let cacheKey = `${name}-${index}`
+    if (!(cacheKey in rawTemplateCache)) {
+        rawTemplateCache[cacheKey] = rawTemplateCache[name]
+    }
+
+    return rawTemplateCache[cacheKey]
+}
+
 export const updateTemplate = (key, value) => {
     if (!modifiedKeys.includes(key)) modifiedKeys.push(key)
     rawTemplateCache[key] = value

@@ -1,5 +1,5 @@
 import { renderPages } from "./src/render.js";
-import { preloadTemplates, templateCache, updateTemplate } from "./src/templates.js";
+import { preloadTemplates, getRawTemplate, updateTemplate } from "./src/templates.js";
 import { tinymceConfig } from "./src/constants.js"
 import { downloadSaveFile, importSaveFile, initBinds, pagesCount, saveLocal, zidIndexes, saveToServer, loadFromServer } from "./src/store.js";
 import { apiGetVulnerabilities, apiCreateVulnerability, apiUpdateVulnerability, apiGetReport } from "./src/api.js";
@@ -259,12 +259,15 @@ function updateCvssDisplay(section) {
 
 function showRawEditPage(origin) {
     let templateId = origin.closest("page").getAttribute("template-id")
+    let separatorIndex = templateId.lastIndexOf("-")
+    let baseName = templateId.substring(0, separatorIndex)
+    let pageIndex = templateId.substring(separatorIndex + 1)
 
     require(['vs/editor/editor.main'], function () {
         const editor = monaco.editor.create(
             document.getElementById('editor'),
             {
-                value: templateCache[templateId],
+                value: getRawTemplate(baseName, pageIndex),
                 language: 'html',
                 theme: 'vs-dark',
                 automaticLayout: true
