@@ -16,6 +16,7 @@
     <div class="admin-tabs">
         <div class="admin-tab" data-tab="users">Users</div>
         <div class="admin-tab" data-tab="categories">Categories</div>
+        <div class="admin-tab" data-tab="templates">Templates</div>
         <div class="admin-tab" data-tab="logs">Logs</div>
     </div>
 
@@ -46,7 +47,10 @@
                 <thead>
                     <tr>
                         <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
                         <th>Role</th>
+                        <th>Auditor</th>
                         <th>Invite</th>
                         <th class="actions-col"></th>
                     </tr>
@@ -55,11 +59,20 @@
                     {% for user in users %}
                     <tr>
                         <td>{{ user.username }}</td>
+                        <td>{{ user.full_name or '—' }}</td>
+                        <td>{{ user.email or '—' }}</td>
                         <td>
                             {% if user.is_admin %}
                                 <span class="badge badge-admin">Admin</span>
                             {% else %}
                                 <span class="badge badge-user">User</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.is_auditor %}
+                                <span class="badge badge-auditor">Auditor</span>
+                            {% else %}
+                                <span class="badge badge-user" style="opacity:.4">—</span>
                             {% endif %}
                         </td>
                         <td>
@@ -73,9 +86,16 @@
                             {% endif %}
                         </td>
                         <td class="actions-col">
-                            <button class="btn-passwd" onclick="openChangePasswordDialog({{ user.id }}, '{{ user.username }}')">Set password</button>
+                            <button class="btn-passwd" data-user-id="{{ user.public_id }}" data-username="{{ user.username }}"
+                                    data-full-name="{{ user.full_name or '' }}" data-email="{{ user.email or '' }}"
+                                    onclick="openEditProfileDialog(this)">Edit profile</button>
+                            <button class="btn-passwd" onclick="openChangePasswordDialog('{{ user.public_id }}', '{{ user.username }}')">Set password</button>
+                            <form method="post" action="{{ url_for('admin_bp.toggle_auditor', user_id=user.public_id) }}" style="display:inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn-passwd" type="submit">{{ 'Unmark auditor' if user.is_auditor else 'Mark as auditor' }}</button>
+                            </form>
                             {% if not user.is_admin %}
-                            <form method="post" action="{{ url_for('admin_bp.delete_user', user_id=user.id) }}" style="display:inline" onsubmit="return confirm('Delete user {{ user.username }}?')">
+                            <form method="post" action="{{ url_for('admin_bp.delete_user', user_id=user.public_id) }}" style="display:inline" onsubmit="return confirm('Delete user {{ user.username }}?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button class="btn-delete" type="submit" title="Delete">×</button>
                             </form>
@@ -103,6 +123,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Template</th>
                         <th class="actions-col"></th>
                     </tr>
                 </thead>
@@ -110,8 +131,19 @@
                     {% for cat in categories %}
                     <tr>
                         <td>{{ cat.name }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('admin_bp.set_category_template', cat_id=cat.public_id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="template_id" onchange="this.form.submit()">
+                                    <option value="">— none —</option>
+                                    {% for tpl in templates %}
+                                    <option value="{{ tpl.public_id }}" {% if cat.template_id == tpl.id %}selected{% endif %}>{{ tpl.name }}{% if tpl.is_default %} (Default){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
                         <td class="actions-col">
-                            <form method="post" action="{{ url_for('admin_bp.delete_category', cat_id=cat.id) }}"
+                            <form method="post" action="{{ url_for('admin_bp.delete_category', cat_id=cat.public_id) }}"
                                   style="display:inline" onsubmit="return confirm('Delete category \'{{ cat.name }}\'?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button class="btn-delete" type="submit" title="Delete">×</button>
@@ -123,6 +155,49 @@
             </table>
             {% else %}
             <p class="empty">No categories yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Templates ── -->
+    <div class="tab-panel" id="tab-templates">
+        <div class="page-header">
+            <h1>Templates</h1>
+            <button class="btn-primary" onclick="openNewTemplateDialog()">Create Template</button>
+        </div>
+        <div class="list-card">
+            {% if templates %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Pages</th>
+                        <th></th>
+                        <th class="actions-col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tpl in templates %}
+                    <tr>
+                        <td>{{ tpl.name }}</td>
+                        <td>{{ tpl.pages|length }}</td>
+                        <td>{% if tpl.is_default %}<span class="badge badge-info">Default</span>{% endif %}</td>
+                        <td class="actions-col">
+                            <a class="btn-passwd" href="{{ url_for('templates_bp.edit', template_id=tpl.public_id) }}">Edit pages</a>
+                            {% if not tpl.is_default %}
+                            <form method="post" action="{{ url_for('admin_bp.delete_template', tpl_id=tpl.public_id) }}"
+                                  style="display:inline" onsubmit="return confirm('Delete template \'{{ tpl.name }}\'? Categories/reports using it will fall back to the Default template.')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn-delete" type="submit" title="Delete">×</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">No templates yet.</p>
             {% endif %}
         </div>
     </div>
@@ -224,8 +299,33 @@
         <form method="post" action="{{ url_for('admin_bp.create_category') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="name" id="newCategoryName" placeholder="Category name" autocomplete="off" required>
+            <select name="template_id">
+                <option value="">— no template —</option>
+                {% for tpl in templates %}
+                <option value="{{ tpl.public_id }}" {% if tpl.is_default %}selected{% endif %}>{{ tpl.name }}{% if tpl.is_default %} (Default){% endif %}</option>
+                {% endfor %}
+            </select>
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="closeNewCategoryDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="dialog-container" id="newTemplateDialog" onclick="if(event.target===this)closeNewTemplateDialog()">
+    <div class="dialog">
+        <h3>Create Template</h3>
+        <form method="post" action="{{ url_for('admin_bp.create_template') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="name" id="newTemplateName" placeholder="Template name" autocomplete="off" required>
+            <select name="source_template_id" required>
+                {% for tpl in templates %}
+                <option value="{{ tpl.public_id }}" {% if tpl.is_default %}selected{% endif %}>Clone from: {{ tpl.name }}{% if tpl.is_default %} (Default){% endif %}</option>
+                {% endfor %}
+            </select>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeNewTemplateDialog()">Cancel</button>
                 <button type="submit" class="btn-primary">Create</button>
             </div>
         </form>
@@ -241,6 +341,21 @@
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="closeNewUserDialog()">Cancel</button>
                 <button type="submit" class="btn-primary">Create &amp; get invite link</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="dialog-container" id="editProfileDialog" onclick="if(event.target===this)closeEditProfileDialog()">
+    <div class="dialog">
+        <h3 id="editProfileTitle">Edit profile</h3>
+        <form method="post" id="editProfileForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="full_name" id="editProfileFullName" placeholder="Full name" autocomplete="off">
+            <input type="email" name="email" id="editProfileEmail" placeholder="Email" autocomplete="off" style="margin-top:10px">
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeEditProfileDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Save</button>
             </div>
         </form>
     </div>

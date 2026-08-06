@@ -8,7 +8,7 @@ export const listInputs = {
         "bind": "global.abbreviations"
     },
     "auditors": {
-        "default": { fullName: "", email: "" },
+        "default": { userId: "", fullName: "", email: "" },
         "storeKey": "global.auditors",
         "z": "auditor",
         "bind": "global.auditors"
@@ -59,7 +59,8 @@ window.removeListItem = (inputId, zid) => {
     updateData(() => {
         let index = zidIndexes[listProperties.bind].indexOf(zid);
         zidIndexes[listProperties.bind].splice(index, 1);
-        getListStore(listProperties).splice(index, 1);
+        const [removed] = getListStore(listProperties).splice(index, 1);
         z.delete(zid)
+        if (window.onListItemRemoved) window.onListItemRemoved(inputId, removed)
     })
 }

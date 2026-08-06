@@ -4,12 +4,12 @@ import argparse
 import secrets
 import logging
 from dotenv import load_dotenv
-from flask import Flask, render_template, flash, request, abort
+from flask import Flask, render_template, flash, request, abort, redirect, url_for
 from flask_login import LoginManager, login_required, current_user
 from flask_migrate import Migrate
 from flask_socketio import SocketIO, join_room, emit
 from flask_wtf.csrf import CSRFProtect
-from src.models import db, User, Report, ReportOwner, Vulnerability
+from src.models import db, User, Report, ReportOwner, Template
 from src.routes.auth import auth
 from src.routes.reports import reports
 from src.routes.vulnerabilities import vulnerabilities
@@ -23,6 +23,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pentex.db'
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken']
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+app.config['ASSET_MAX_UPLOAD_SIZE'] = 20 * 1024 * 1024
 
 csrf = CSRFProtect(app)
 
@@ -71,30 +73,18 @@ with app.app_context():
 @app.route('/')
 @login_required
 def index():
-    report_count = (Report.query
-                    .join(ReportOwner, ReportOwner.report_id == Report.id)
-                    .filter(ReportOwner.user_id == current_user.id)
-                    .count())
-    vuln_count = Vulnerability.query.count()
-    recent_reports = (Report.query
-                      .join(ReportOwner, ReportOwner.report_id == Report.id)
-                      .filter(ReportOwner.user_id == current_user.id)
-                      .order_by(Report.updated_at.desc())
-                      .limit(5)
-                      .all())
-    return render_template('index.html',
-                           report_count=report_count,
-                           vuln_count=vuln_count,
-                           recent_reports=recent_reports)
+    return redirect(url_for('reports.index'))
 
 
-@app.route('/reports/<int:report_id>')
+@app.route('/reports/<string:report_id>')
 @login_required
 def editor(report_id):
-    report = Report.query.get_or_404(report_id)
-    if not ReportOwner.query.filter_by(report_id=report_id, user_id=current_user.id).first():
+    report = Report.query.filter_by(public_id=report_id).first_or_404()
+    if not ReportOwner.query.filter_by(report_id=report.id, user_id=current_user.id).first():
         abort(403)
-    return render_template('editor.html', report=report)
+    tpl = report.template or Template.query.filter_by(is_default=True).first()
+    template_id = tpl.public_id if tpl else None
+    return render_template('editor.html', report=report, template_id=template_id)
 
 
 # ── Collaborative editing ──────────────────────────────────────────────────
@@ -106,7 +96,7 @@ _report_rooms: dict = {}
 _COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#84cc16']
 
 
-def _room_key(report_id: int) -> str:
+def _room_key(report_id: str) -> str:
     return f'report_{report_id}'
 
 
@@ -119,11 +109,11 @@ def _broadcast_users(report_id: int):
 def handle_join(data):
     if not current_user.is_authenticated:
         return
-    report_id = int(data['report_id'])
+    report_id = data['report_id']
     with app.app_context():
-        report = Report.query.get(report_id)
+        report = Report.query.filter_by(public_id=report_id).first()
         if not report or not ReportOwner.query.filter_by(
-                report_id=report_id, user_id=current_user.id).first():
+                report_id=report.id, user_id=current_user.id).first():
             return
     join_room(_room_key(report_id))
     room = _report_rooms.setdefault(report_id, {})
@@ -131,7 +121,7 @@ def handle_join(data):
         used = {u['color'] for u in room.values()}
         color = next((c for c in _COLORS if c not in used), _COLORS[len(room) % len(_COLORS)])
         room[current_user.id] = {
-            'id': current_user.id,
+            'id': current_user.public_id,
             'username': current_user.username,
             'color': color,
             'page': 'general',
@@ -148,7 +138,7 @@ def handle_join(data):
 def handle_page_change(data):
     if not current_user.is_authenticated:
         return
-    report_id = int(data['report_id'])
+    report_id = data['report_id']
     room = _report_rooms.get(report_id, {})
     if current_user.id in room:
         room[current_user.id]['page'] = data.get('page', 'general')
@@ -159,7 +149,7 @@ def handle_page_change(data):
 def handle_field_focus(data):
     if not current_user.is_authenticated:
         return
-    report_id = int(data['report_id'])
+    report_id = data['report_id']
     room = _report_rooms.get(report_id, {})
     if current_user.id in room:
         room[current_user.id]['focused_field'] = data.get('field_id')
@@ -170,7 +160,7 @@ def handle_field_focus(data):
 def handle_field_blur(data):
     if not current_user.is_authenticated:
         return
-    report_id = int(data['report_id'])
+    report_id = data['report_id']
     room = _report_rooms.get(report_id, {})
     if current_user.id in room:
         room[current_user.id]['focused_field'] = None
@@ -181,7 +171,7 @@ def handle_field_blur(data):
 def handle_field_change(data):
     if not current_user.is_authenticated:
         return
-    report_id = int(data['report_id'])
+    report_id = data['report_id']
     if report_id not in _report_rooms or current_user.id not in _report_rooms[report_id]:
         return
     socketio.emit('field_changed', data, to=_room_key(report_id), skip_sid=request.sid)
@@ -225,4 +215,4 @@ if __name__ == '__main__':
         sys.exit(0)
 
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    socketio.run(app, debug=debug)
+    socketio.run(app, host="0.0.0.0", debug=debug)

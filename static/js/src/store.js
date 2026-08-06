@@ -23,21 +23,10 @@ window.dataStore = {
     }
 }
 
-export let pagesCount = {
-    "title-page": 1,
-    "diffusion-table": 1,
-    "version-history": 1,
-    "contents-table": 1,
-    "acronyms-table": 1,
-    "introduction": 1,
-    "scope-and-conditions": 1,
-    "methodology": 1,
-    "reserves": 1,
-    "executive-summary": 1,
-    "test-overview": 1,
-    "findings": 0,
-    "figures": 1
-}
+// Populated from the loaded report's saved pagesCount (see importData below) — the
+// bundle of page names/counts is now determined server-side by the report's linked
+// Template, not a fixed constant here.
+export let pagesCount = {}
 
 // Some parts doesn't check if the key exists, so manually init it here
 export const zidIndexes = {
@@ -159,12 +148,15 @@ export function importDataStore(newDataStore) {
         } else if (bindElement.dataset.listInput) {
             const listInputId = bindElement.dataset.listInput
             for (let i = 0; i < window.dataStore.global[key].length; i++) {
+                const itemData = window.dataStore.global[key][i]
                 let listItem = addListItem(listInputId, false)
-                Object.keys(window.dataStore.global[key][i]).forEach((subkey) => {
-                    listItem.querySelector(`[data-bind='${subkey}']`).value = window.dataStore.global[key][i][subkey]
+                Object.keys(itemData).forEach((subkey) => {
+                    const el = listItem.querySelector(`[data-bind='${subkey}']`)
+                    if (el) el.value = itemData[subkey]
                 })
+                if (window.onListItemImported) window.onListItemImported(listInputId, listItem, itemData)
             }
-            
+
         } else {
             console.log("Unknown element", bindElement)
         }

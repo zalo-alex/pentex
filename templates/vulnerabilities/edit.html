@@ -35,7 +35,7 @@
                     <select name="category_id">
                         <option value="">— None —</option>
                         {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if vuln.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        <option value="{{ cat.public_id }}" {% if vuln.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                         {% endfor %}
                     </select>
                 </label>

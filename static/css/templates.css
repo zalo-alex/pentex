@@ -1,3 +1,32 @@
+.asset-thumb {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 3px;
+    background: #f5f5f5;
+    display: block;
+}
+
+.asset-file-icon {
+    display: inline-block;
+    padding: 3px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.asset-url-input {
+    width: 260px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-family: monospace;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin-right: 6px;
+}
+
 .template-header-row {
     cursor: pointer;
     user-select: none;
@@ -37,4 +66,271 @@
             }
         }
     }
+}
+
+/* ── In-app template editor ── */
+/* Full-viewport 3-pane layout (page list | Monaco | live preview), fixed below
+   the 56px nav, matching the report editor's (editor.css .sidebar) approach so
+   the editor uses the full window instead of a centered, width-capped column. */
+
+.template-edit-page {
+    position: fixed;
+    left: 0;
+    top: 56px;
+    width: 100%;
+    height: calc(100vh - 56px);
+    display: flex;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e8e8e8;
+}
+
+.template-page-list {
+    width: 220px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.template-page-list-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.back-link {
+    color: #c41e3a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.template-page-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    flex: 1;
+}
+
+.template-page-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #1a1a2e;
+}
+
+.template-page-item:hover {
+    background: #fafafa;
+}
+
+.template-page-item.active {
+    background: #fde8e8;
+    font-weight: 600;
+}
+
+.template-editor-main {
+    flex: 1 1 50%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e0e0e0;
+}
+
+.template-editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+    flex-shrink: 0;
+}
+
+#currentPageName {
+    flex: 1;
+}
+
+.error-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #fde8e8;
+    color: #b91c1c;
+}
+
+.editor-save-btn {
+    padding: 8px 18px;
+    background: #c41e3a;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.editor-save-btn:hover {
+    background: #a8192f;
+}
+
+.editor-save-btn:disabled {
+    background: #ccc;
+    cursor: default;
+}
+
+.monaco-container {
+    flex: 1;
+    min-height: 0;
+}
+
+.template-preview-pane {
+    flex: 1 1 50%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.template-preview-header {
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+    flex-shrink: 0;
+}
+
+.preview-frame {
+    flex: 1;
+    border: 0;
+    width: 100%;
+    background: #fff;
+}
+
+.editor-version-btn {
+    padding: 8px 18px;
+    background: #fff;
+    color: #c41e3a;
+    border: 1px solid #c41e3a;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.editor-version-btn:hover {
+    background: #fde8e8;
+}
+
+.versions-panel {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    width: 320px;
+    height: calc(100vh - 56px);
+    background: #fff;
+    border-left: 1px solid #e0e0e0;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, .08);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+}
+
+.versions-panel[hidden] {
+    display: none;
+}
+
+.versions-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.versions-panel-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #888;
+}
+
+#versionList {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.version-item {
+    padding: 10px;
+    border-radius: 3px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.version-item-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.version-number {
+    font-weight: 700;
+    color: #1a1a2e;
+    font-size: 13px;
+}
+
+.version-label {
+    color: #555;
+    font-size: 13px;
+}
+
+.version-item-meta {
+    color: #888;
+    font-size: 11px;
+    margin: 4px 0 8px;
+}
+
+.version-download-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c41e3a;
+    background: #fff;
+    border: 1px solid #c41e3a;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.version-download-btn:hover {
+    background: #fde8e8;
+}
+
+.version-empty {
+    padding: 10px;
+    color: #888;
+    font-size: 13px;
 }

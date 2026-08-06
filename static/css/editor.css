@@ -547,6 +547,20 @@ button {
     }
 }
 
+.auditor-select {
+    flex: 1;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+.auditor-manual-input {
+    display: none;
+}
+
+.auditor-item.auditor-other .auditor-manual-input {
+    display: block;
+}
+
 .abbreviation-item input:first-child {
     flex: 0 0 120px;
     font-weight: 600;

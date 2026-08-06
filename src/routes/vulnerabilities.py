@@ -19,7 +19,9 @@ def _save_vuln(vuln, data):
     vuln.name = data.get('name', '').strip()
     vuln.description = data.get('description', '')
     vuln.classification = data.get('classification', '').strip()
-    vuln.category_id = data.get('category_id') or None
+    category_id = data.get('category_id') or None
+    category = Category.query.filter_by(public_id=category_id).first() if category_id else None
+    vuln.category_id = category.id if category else None
     vuln.cvss_vector = data.get('cvss_vector', '')
     vuln.cvss_score = float(data.get('cvss_score') or 0)
     vuln.severity = data.get('severity', 'NONE')
@@ -33,13 +35,13 @@ def _save_vuln(vuln, data):
 def api_list():
     items = Vulnerability.query.order_by(Vulnerability.name).all()
     return jsonify([{
-        'id': v.id,
+        'id': v.public_id,
         'name': v.name,
         'severity': v.severity,
         'cvss_score': v.cvss_score,
         'cvss_vector': v.cvss_vector or '',
         'classification': v.classification or '',
-        'category_id': v.category_id,
+        'category_id': v.category.public_id if v.category else None,
         'category': v.category.name if v.category else None,
         'description': v.description or '',
         'remediation': v.remediation or '',
@@ -57,20 +59,33 @@ def api_create():
     db.session.add(vuln)
     db.session.commit()
     add_log('VULN_CREATE', detail=vuln.name)
-    return jsonify({'id': vuln.id, 'name': vuln.name}), 201
+    return jsonify({'id': vuln.public_id, 'name': vuln.name}), 201
 
 
-@vulnerabilities.route('/api/vulnerabilities/<int:id>', methods=['PUT'])
+@vulnerabilities.route('/api/vulnerabilities/<string:id>', methods=['PUT'])
 @login_required
 def api_update(id):
-    vuln = Vulnerability.query.get_or_404(id)
+    vuln = Vulnerability.query.filter_by(public_id=id).first_or_404()
     if vuln.created_by_id and vuln.created_by_id != current_user.id and not current_user.is_admin:
         abort(403)
     data = request.get_json()
     _save_vuln(vuln, data)
     db.session.commit()
     add_log('VULN_EDIT', detail=vuln.name)
-    return jsonify({'id': vuln.id, 'name': vuln.name})
+    return jsonify({'id': vuln.public_id, 'name': vuln.name})
+
+
+@vulnerabilities.route('/api/vulnerabilities/<string:id>', methods=['DELETE'])
+@login_required
+def api_delete(id):
+    vuln = Vulnerability.query.filter_by(public_id=id).first_or_404()
+    if vuln.created_by_id and vuln.created_by_id != current_user.id and not current_user.is_admin:
+        abort(403)
+    name = vuln.name
+    db.session.delete(vuln)
+    db.session.commit()
+    add_log('VULN_DELETE', detail=name)
+    return jsonify({'ok': True})
 
 
 @vulnerabilities.route('/vulnerabilities')
@@ -95,10 +110,10 @@ def new():
     return render_template('vulnerabilities/new.html', categories=categories)
 
 
-@vulnerabilities.route('/vulnerabilities/<int:id>/edit', methods=['GET', 'POST'])
+@vulnerabilities.route('/vulnerabilities/<string:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(id):
-    vuln = Vulnerability.query.get_or_404(id)
+    vuln = Vulnerability.query.filter_by(public_id=id).first_or_404()
     if vuln.created_by_id and vuln.created_by_id != current_user.id and not current_user.is_admin:
         abort(403)
 

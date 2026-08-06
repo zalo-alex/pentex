@@ -1,5 +1,5 @@
 // ── Tab logic ──
-const TABS = ['users', 'categories', 'logs'];
+const TABS = ['users', 'categories', 'templates', 'logs'];
 
 function activateTab(name) {
     if (!TABS.includes(name)) name = 'users'
@@ -51,6 +51,22 @@ document.getElementById('changePasswordInput').addEventListener('keydown', e => 
     if (e.key === 'Escape') closeChangePasswordDialog()
 })
 
+function openEditProfileDialog(btn) {
+    const { userId, username, fullName, email } = btn.dataset
+    document.getElementById('editProfileTitle').textContent = 'Edit profile — ' + username
+    document.getElementById('editProfileForm').action = '/admin/users/' + userId + '/profile'
+    document.getElementById('editProfileFullName').value = fullName || ''
+    document.getElementById('editProfileEmail').value = email || ''
+    document.getElementById('editProfileDialog').classList.add('open')
+    setTimeout(() => document.getElementById('editProfileFullName').focus(), 50)
+}
+function closeEditProfileDialog() {
+    document.getElementById('editProfileDialog').classList.remove('open')
+}
+document.getElementById('editProfileFullName').addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeEditProfileDialog()
+})
+
 function openNewCategoryDialog() {
     document.getElementById('newCategoryDialog').classList.add('open')
     setTimeout(() => document.getElementById('newCategoryName').focus(), 50)
@@ -60,4 +76,15 @@ function closeNewCategoryDialog() {
 }
 document.getElementById('newCategoryName').addEventListener('keydown', e => {
     if (e.key === 'Escape') closeNewCategoryDialog()
+})
+
+function openNewTemplateDialog() {
+    document.getElementById('newTemplateDialog').classList.add('open')
+    setTimeout(() => document.getElementById('newTemplateName').focus(), 50)
+}
+function closeNewTemplateDialog() {
+    document.getElementById('newTemplateDialog').classList.remove('open')
+}
+document.getElementById('newTemplateName').addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeNewTemplateDialog()
 })

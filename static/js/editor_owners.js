@@ -15,7 +15,7 @@ async function loadOwners() {
         item.dataset.ownerId = o.id;
         item.innerHTML =
             '<span style="flex:1;font-size:13px;padding:4px 2px;">' + escapeHtml(o.username) + '</span>' +
-            '<button class="remove-abbr" onclick="removeOwner(' + o.id + ')" ' +
+            '<button class="remove-abbr" onclick="removeOwner(\'' + o.id + '\')" ' +
             (owners.length <= 1 ? 'disabled title="Cannot remove the last owner"' : '') +
             '>×</button>';
         list.appendChild(item);
@@ -34,7 +34,7 @@ async function loadOwners() {
 
 async function addOwner() {
     const sel = document.getElementById('ownerSelectInput');
-    const userId = parseInt(sel.value);
+    const userId = sel.value;
     if (!userId) return;
     const username = sel.options[sel.selectedIndex].text;
     const res = await fetch('/api/reports/' + _reportId + '/owners', {

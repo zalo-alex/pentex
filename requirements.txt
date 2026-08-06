@@ -4,6 +4,9 @@ Flask-Migrate==4.1.0
 Flask-SocketIO==5.6.1
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
+gevent==26.7.0
+gevent-websocket==0.10.1
+playwright==1.61.0
 python-dotenv==1.2.2
 SQLAlchemy==2.0.46
 Werkzeug==3.1.5

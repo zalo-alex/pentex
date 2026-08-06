@@ -12,7 +12,7 @@ export const fetchPageTemplate = async (name) => {
         return templateCache[name];
     }
 
-    let res = await fetch("/static/pages/" + name + ".hbs")
+    let res = await fetch(`/api/templates/${_activeTemplateId}/pages/${name}.hbs/raw`)
     let text = await res.text()
     rawTemplateCache[name] = text;
     templateCache[name] = Handlebars.compile(text);
@@ -20,10 +20,15 @@ export const fetchPageTemplate = async (name) => {
 }
 
 export const preloadTemplates = async () => {
-    for (let pageName of Object.keys(pagesCount)) {
-        await fetchPageTemplate(pageName)
+    let res = await fetch(`/api/templates/${_activeTemplateId}/pages`)
+    let pages = await res.json()
+    for (let page of pages) {
+        if (!page.filename.endsWith(".hbs")) continue
+        let name = page.filename.slice(0, -4)
+        rawTemplateCache[name] = page.content
+        templateCache[name] = Handlebars.compile(page.content)
     }
-    await fetchPageTemplate("headers")
+    if (!templateCache["headers"]) await fetchPageTemplate("headers")
 }
 
 export const getTemplate = (name, index) => {

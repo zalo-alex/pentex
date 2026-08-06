@@ -4,6 +4,7 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
 <link rel="stylesheet" href="/static/css/templates.css">
 {% endblock %}
 
@@ -14,49 +15,109 @@
     </div>
 
     <div class="list-card">
-        {% if templates %}
+        {% if bundles %}
         <table>
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Pages</th>
                     <th>Errors</th>
+                    <th>Versions</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                {% for tpl in templates %}
-                {% if tpl.result %}
-                <tr class="template-header-row" onclick="toggleErrors(this)">
-                    <td>{{ tpl.filename }}</td>
-                    <td>{{ tpl.result|length }}</td>
-                    <td><span class="collapse-icon">&#9654;</span></td>
-                </tr>
-                {% for error in tpl.result %}
-                <tr class="template-error-row collapsed">
-                    <td colspan="3">
-                        {% set ns = namespace(line=error.line | replace("<", "&lt;") | replace(">", "&gt;")) %}
-                        {% for val in error.matches %}
-                            {% set ns.line = ns.line | replace(val, "<b>" + val + "</b>") %}
-                        {% endfor %}
-                        <pre class="template-error">{{error.line_index}} | {{ns.line | safe}} <i>{{error.message}}</i></pre>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% else %}
+                {% for tpl in bundles %}
                 <tr>
-                    <td>{{ tpl.filename }}</td>
-                    <td>0</td>
-                    <td></td>
+                    <td>
+                        {{ tpl.name }}
+                        {% if tpl.is_default %}<span class="badge badge-info">Default</span>{% endif %}
+                    </td>
+                    <td>{{ tpl.page_count }}</td>
+                    <td>{{ tpl.error_count }}</td>
+                    <td>{{ tpl.version_count }}</td>
+                    <td><a href="{{ url_for('templates_bp.edit', template_id=tpl.id) }}">Open</a></td>
                 </tr>
-                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p class="empty">No templates found in <code>static/pages/</code>.</p>
+        <p class="empty">No template bundles found. Create one from the admin panel.</p>
+        {% endif %}
+    </div>
+
+    <div class="page-header" style="margin-top:32px">
+        <h1>Assets</h1>
+        {% if is_admin %}
+        <button class="btn-primary" onclick="openUploadAssetDialog()">Upload asset</button>
+        {% endif %}
+    </div>
+
+    <div class="list-card">
+        {% if assets %}
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Filename</th>
+                    <th>Size</th>
+                    <th>Uploaded by</th>
+                    <th>URL</th>
+                    <th class="actions-col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                <tr>
+                    <td>
+                        {% if asset.is_image %}
+                        <img src="{{ asset.url }}" alt="" class="asset-thumb">
+                        {% else %}
+                        <span class="asset-file-icon">FILE</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ asset.filename }}</td>
+                    <td>{{ asset.size_display }}</td>
+                    <td>{{ asset.uploaded_by_username }}</td>
+                    <td>
+                        <input type="text" readonly value="{{ asset.url }}" class="asset-url-input"
+                               onclick="this.select()" onfocus="this.select()">
+                        <button type="button" class="btn-secondary" onclick="copyAssetUrl('{{ asset.url }}')">Copy</button>
+                    </td>
+                    <td class="actions-col">
+                        {% if is_admin %}
+                        <form method="post" action="{{ url_for('templates_bp.delete_asset', asset_id=asset.id) }}"
+                              style="display:inline" onsubmit="return confirm('Delete asset \'{{ asset.filename }}\'? Anything referencing its URL will break.')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn-delete" type="submit" title="Delete">×</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">No assets uploaded yet.</p>
         {% endif %}
     </div>
 </div>
 
-<script src="/static/js/templates_page.js"></script>
+{% if is_admin %}
+<div class="dialog-container" id="uploadAssetDialog" onclick="if(event.target===this)closeUploadAssetDialog()">
+    <div class="dialog">
+        <h3>Upload Asset</h3>
+        <form method="post" action="{{ url_for('templates_bp.upload_asset') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="file" required>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeUploadAssetDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script src="/static/js/templates_list.js"></script>
 {% endblock %}

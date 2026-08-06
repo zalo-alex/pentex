@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}{{ template.name }} - Templates{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/templates.css">
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script>
+    require.config({
+        paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' }
+    });
+    const _templateId = {{ template.public_id|tojson }};
+    const _isAdmin = {{ is_admin|tojson }};
+    const _initialPages = {{ pages|tojson }};
+</script>
+{% endblock %}
+
+{% block nav_title %}Template &mdash; {{ template.name }}{% endblock %}
+
+{% block content %}
+<div class="template-edit-page">
+    <div class="template-page-list">
+        <div class="template-page-list-header">
+            <a href="{{ url_for('templates_bp.index') }}" class="back-link">&larr; {{ template.name }}</a>
+        </div>
+        <ul id="pageList"></ul>
+    </div>
+
+    <div class="template-editor-main">
+        <div class="template-editor-toolbar">
+            <span id="currentPageName">Select a page</span>
+            <span id="errorBadge" class="error-badge" style="display:none"></span>
+            {% if is_admin %}
+            <button class="editor-save-btn" id="saveBtn" type="button" disabled>Save</button>
+            <button class="editor-version-btn" id="createVersionBtn" type="button">Create Version</button>
+            {% endif %}
+            <button class="editor-version-btn editor-version-btn-secondary" id="versionsBtn" type="button">Versions</button>
+        </div>
+        <div id="monacoContainer" class="monaco-container"></div>
+    </div>
+
+    <div class="template-preview-pane">
+        <div class="template-preview-header">Live Preview</div>
+        <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+</div>
+
+<div id="versionsPanel" class="versions-panel" hidden>
+    <div class="versions-panel-header">
+        <span>Versions</span>
+        <button id="versionsPanelClose" class="versions-panel-close" type="button">&times;</button>
+    </div>
+    <ul id="versionList"></ul>
+</div>
+
+<script type="module" src="/static/js/template_editor.js"></script>
+{% endblock %}

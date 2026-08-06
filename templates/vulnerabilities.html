@@ -4,6 +4,8 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/list.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
+<link rel="stylesheet" href="/static/css/reports.css">
 {% endblock %}
 
 {% block content %}
@@ -22,13 +24,14 @@
                     <th>Category</th>
                     <th>Severity</th>
                     <th>Created</th>
+                    <th class="actions-col"></th>
                 </tr>
             </thead>
             <tbody>
                 {% for vuln in vulnerabilities %}
                 {% set sev = vuln.severity or 'INFORMATIONAL' %}
                 <tr>
-                    <td><a href="{{ url_for('vulnerabilities.edit', id=vuln.id) }}">{{ vuln.name }}</a></td>
+                    <td><a href="{{ url_for('vulnerabilities.edit', id=vuln.public_id) }}">{{ vuln.name }}</a></td>
                     <td>{{ vuln.category.name if vuln.category else '—' }}</td>
                     <td>
                         {% if sev == 'CRITICAL' %}
@@ -44,6 +47,9 @@
                         {% endif %}
                     </td>
                     <td>{{ vuln.created_at }}</td>
+                    <td class="actions-col">
+                        <button class="btn-delete" onclick="deleteVulnerability('{{ vuln.public_id }}', this)" title="Delete">×</button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -53,4 +59,6 @@
         {% endif %}
     </div>
 </div>
+
+<script src="/static/js/vulnerabilities_list.js"></script>
 {% endblock %}

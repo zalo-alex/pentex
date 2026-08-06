@@ -9,15 +9,18 @@ function closeNewReportDialog() {
     document.getElementById('newReportDialog').classList.remove('open')
 }
 
-document.getElementById('newReportName').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') createReport()
-    if (e.key === 'Escape') closeNewReportDialog()
-})
+const newReportNameInput = document.getElementById('newReportName')
+if (newReportNameInput) {
+    newReportNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') createReport()
+        if (e.key === 'Escape') closeNewReportDialog()
+    })
+}
 
 async function createReport() {
     const name = document.getElementById('newReportName').value.trim()
     if (!name) return
-    const category_id = parseInt(document.getElementById('newReportCategory').value) || null
+    const category_id = document.getElementById('newReportCategory').value || null
 
     const res = await fetch('/api/reports', {
         method: 'POST',

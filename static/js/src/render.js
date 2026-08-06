@@ -55,6 +55,7 @@ export const renderPages = () => {
     figures = []
     z.batchRender(() => {
         zpages.updatePages()
+        Prism.highlightAllUnder(pagesContainer)
         addRawEditButtons()
         window.scrollTo(0, previousScrollY)
     })

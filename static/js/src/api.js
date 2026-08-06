@@ -4,7 +4,7 @@ export async function apiGetVulnerabilities() {
     return await res.json()
 }
 
-function _csrfToken() {
+export function _csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content ?? ''
 }
 
@@ -28,6 +28,12 @@ export async function apiUpdateVulnerability(id, payload) {
     return await res.json()
 }
 
+export async function apiGetAuditorUsers() {
+    const res = await fetch('/api/users/auditors')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.json()
+}
+
 export async function apiGetReport(reportId) {
     const res = await fetch(`/api/reports/${reportId}`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -42,4 +48,14 @@ export async function apiSaveReport(reportId, content) {
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.json()
+}
+
+export async function apiExportPdf(reportId, html) {
+    const res = await fetch(`/api/reports/${reportId}/export/pdf`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
+        body: JSON.stringify({ html })
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return await res.blob()
 }

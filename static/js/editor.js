@@ -3,6 +3,7 @@ import { preloadTemplates, getRawTemplate, updateTemplate } from "./src/template
 import { tinymceConfig } from "./src/constants.js"
 import { downloadSaveFile, importSaveFile, initBinds, pagesCount, saveLocal, zidIndexes, saveToServer, loadFromServer } from "./src/store.js";
 import { apiGetVulnerabilities, apiCreateVulnerability, apiUpdateVulnerability, apiGetReport } from "./src/api.js";
+import { loadAuditorUsers } from "./src/auditors.js"
 import "./src/export.js"
 import "./src/editor.js"
 import { updateCvssDisplay as updateCvssDOM, cvssImpactMap } from "./cvss.js"
@@ -28,13 +29,16 @@ buttons.forEach((button, index) => {
 
 let renderTimeout = null
 let isLoading = false
+window.isDirty = false
+function markDirty() {
+    window.isDirty = true
+    const navSaveBtn = document.getElementById('navSaveBtn')
+    if (navSaveBtn && reportId) navSaveBtn.style.display = ''
+}
 window.updateData = (callback) => {
     callback()
 
-    if (!isLoading) {
-        const navSaveBtn = document.getElementById('navSaveBtn')
-        if (navSaveBtn && reportId) navSaveBtn.style.display = ''
-    }
+    if (!isLoading) markDirty()
 
     if (renderTimeout) clearTimeout(renderTimeout)
     renderTimeout = setTimeout(() => {
@@ -42,6 +46,12 @@ window.updateData = (callback) => {
         renderTimeout = null
     }, 300)
 }
+
+window.addEventListener('beforeunload', (e) => {
+    if (!window.isDirty) return
+    e.preventDefault()
+    e.returnValue = ''
+})
 
 window.findingOrder = []
 window.tabToFinding = {}
@@ -282,6 +292,7 @@ function showRawEditPage(origin) {
 
         editor.onDidChangeModelContent(() => {
             updateTemplate(templateId, editor.getValue());
+            markDirty();
         });
 
         document.querySelector('.raw-edit-dialog-container').style.display = "flex"
@@ -439,21 +450,27 @@ async function doSaveFindingToVuln(zid, vulnId) {
     return result
 }
 
-function withButtonFeedback(btn, asyncFn) {
-    const originalHTML = btn.innerHTML
+function withButtonFeedback(btn, asyncFn, opts = {}) {
+    const { loadingText, successText, errorText = 'Error' } = opts
+    const label = btn.querySelector('span')
+    const originalText = label ? label.textContent : null
     btn.disabled = true
+    if (label && loadingText) label.textContent = loadingText
     asyncFn()
         .then(() => {
             btn.style.color = '#16a34a'
             btn.style.borderColor = '#16a34a'
+            if (label && successText) label.textContent = successText
         })
-        .catch(() => {
+        .catch((e) => {
+            console.error(e)
             btn.style.color = '#c41e3a'
             btn.style.borderColor = '#c41e3a'
+            if (label && loadingText) label.textContent = errorText
         })
         .finally(() => {
             setTimeout(() => {
-                btn.innerHTML = originalHTML
+                if (label && originalText !== null) label.textContent = originalText
                 btn.style.color = ''
                 btn.style.borderColor = ''
                 btn.disabled = false
@@ -503,8 +520,8 @@ document.addEventListener('click', (e) => {
     }
 })
 
-const reportMatch = window.location.pathname.match(/^\/reports\/(\d+)$/)
-const reportId = reportMatch ? parseInt(reportMatch[1]) : null
+const reportMatch = window.location.pathname.match(/^\/reports\/([^/]+)$/)
+const reportId = reportMatch ? reportMatch[1] : null
 
 window.onServerSaveClick = () => {
     if (!reportId) return
@@ -517,6 +534,7 @@ window.onServerSaveClick = () => {
         .then(() => {
             label.textContent = 'Saved!'
             btn.style.color = '#16a34a'
+            window.isDirty = false
             const navSaveBtn = document.getElementById('navSaveBtn')
             if (navSaveBtn) navSaveBtn.style.display = 'none'
         })
@@ -533,12 +551,21 @@ window.onServerSaveClick = () => {
         })
 }
 
+window.onExportHtmlClick = () => {
+    withButtonFeedback(document.getElementById('exportHtmlBtn'), exportHtml, { loadingText: 'Exporting...', successText: 'Exported!' })
+}
+
+window.onExportPdfClick = () => {
+    withButtonFeedback(document.getElementById('exportPdfBtn'), exportPdf, { loadingText: 'Generating PDF...', successText: 'Exported!' })
+}
+
 window.addEventListener("load", async () => {
     const loader = document.getElementById('loadingOverlay')
     if (loader) loader.style.display = 'flex'
 
     await preloadTemplates()
     initBinds()
+    await loadAuditorUsers()
 
     // Attach collab focus/blur listeners to top-level global fields
     document.querySelectorAll('[data-bind^="global."]').forEach(el => {

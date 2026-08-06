@@ -8,7 +8,7 @@ A Flask web application for managing penetration testing reports. Security audit
 - **Vulnerability database** — global catalog with CVSS v3.1 scoring, severity classification, and insertion into reports
 - **Template system** — Handlebars templates (`static/pages/*.hbs`) render structured sections (title page, findings, executive summary, etc.) directly into the editor
 - **User management** — invite-only registration, admin panel, audit log
-- **PDF export** — browser print pipeline with report-specific styles
+- **PDF export** — server-side rendering via headless Chromium (Playwright), matching report-specific styles
 
 ## Getting started
 
@@ -16,6 +16,7 @@ A Flask web application for managing penetration testing reports. Security audit
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+playwright install chromium
 
 flask db upgrade
 python app.py

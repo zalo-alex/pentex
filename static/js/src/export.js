@@ -1,4 +1,5 @@
 import { renderPages } from "./render.js"
+import { apiExportPdf } from "./api.js"
 
 window.exportTemplateHtml = null;
 fetchExportTemplate()
@@ -9,7 +10,7 @@ async function fetchExportTemplate() {
         <head>
             <script>${await staticFetch("https://cdn.jsdelivr.net/gh/zalo-alex/zutils/lib/zprocess.js")}</script>
             <style>${await staticFetch("https://cdn.jsdelivr.net/gh/zalo-alex/zutils/lib/zpages.css")}</style>
-            <style>${await staticFetch("/static/pages/styles.css")}</style>
+            <style>${await staticFetch(`/api/templates/${_activeTemplateId}/pages/styles.css/raw`)}</style>
         </head>
         <body>
             {{EXPORTED_HTML}}
@@ -65,6 +66,21 @@ window.exportHtml = async () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'export.html';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+window.exportPdf = async () => {
+    const reportMatch = window.location.pathname.match(/^\/reports\/([^/]+)$/)
+    const reportId = reportMatch ? reportMatch[1] : null
+    if (!reportId) throw new Error('No report ID in URL')
+
+    const html = await compileHtml();
+    const blob = await apiExportPdf(reportId, html);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export.pdf';
     a.click();
     URL.revokeObjectURL(url);
 }
