@@ -121,10 +121,17 @@ def _asset_dict(a):
     }
 
 
+def _reject_clone(tpl):
+    # Per-report private clones are managed only via report create/delete;
+    # don't let the template-management surface touch them directly.
+    if tpl.is_report_clone:
+        abort(404)
+
+
 @templates_bp.route('/templates')
 @login_required
 def index():
-    bundles = Template.query.order_by(Template.name).all()
+    bundles = Template.query.filter_by(is_report_clone=False).order_by(Template.name).all()
     summaries = []
     for tpl in bundles:
         analyzed = analyze_templates([_page_dict(p) for p in tpl.pages])
@@ -146,6 +153,7 @@ def index():
 @login_required
 def edit(template_id):
     tpl = Template.query.filter_by(public_id=template_id).first_or_404()
+    _reject_clone(tpl)
     pages = analyze_templates([_page_dict(p) for p in tpl.pages])
     return render_template('template_edit.html', template=tpl, pages=pages, is_admin=current_user.is_admin)
 
@@ -153,7 +161,7 @@ def edit(template_id):
 @templates_bp.route('/api/templates')
 @login_required
 def api_list():
-    bundles = Template.query.order_by(Template.name).all()
+    bundles = Template.query.filter_by(is_report_clone=False).order_by(Template.name).all()
     return jsonify([{'id': t.public_id, 'name': t.name, 'is_default': t.is_default} for t in bundles])
 
 
@@ -163,6 +171,27 @@ def api_list_pages(template_id):
     tpl = Template.query.filter_by(public_id=template_id).first_or_404()
     pages = analyze_templates([_page_dict(p) for p in tpl.pages])
     return jsonify(pages)
+
+
+_PINNED_PAGE_FILENAMES = ('headers.hbs', 'styles.css')
+
+
+@templates_bp.route('/api/templates/<string:template_id>/pages/order', methods=['PUT'])
+@admin_required
+def api_reorder_pages(template_id):
+    tpl = Template.query.filter_by(public_id=template_id).first_or_404()
+    _reject_clone(tpl)
+    data = request.get_json(silent=True) or {}
+    order = data.get('order')
+    if not isinstance(order, list) or not all(isinstance(f, str) for f in order):
+        return jsonify({'error': 'order must be a list of filenames.'}), 400
+
+    existing = [p.filename for p in tpl.pages if p.filename not in _PINNED_PAGE_FILENAMES]
+    if len(order) != len(existing) or set(order) != set(existing):
+        return jsonify({'error': "order must be a permutation of the template's reorderable pages."}), 400
+
+    template_storage.write_page_order(tpl.public_id, order)
+    return jsonify({'order': order})
 
 
 @templates_bp.route('/api/templates/<string:template_id>/pages/<path:filename>/raw')
@@ -179,6 +208,7 @@ def api_raw_page(template_id, filename):
 @admin_required
 def api_update_page(template_id, filename):
     tpl = Template.query.filter_by(public_id=template_id).first_or_404()
+    _reject_clone(tpl)
     existing = template_storage.read_page(tpl.public_id, filename)
     if existing is None:
         abort(404)
@@ -193,6 +223,7 @@ def api_update_page(template_id, filename):
 @admin_required
 def api_create_version(template_id):
     tpl = Template.query.filter_by(public_id=template_id).first_or_404()
+    _reject_clone(tpl)
     if not tpl.pages:
         return jsonify({'error': 'Template has no pages to snapshot.'}), 400
 

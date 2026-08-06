@@ -31,7 +31,7 @@ def index():
             .join(subq, InviteToken.id == subq.c.max_id).all())
     pending_invites = {r.user_id: r.token for r in rows}
     categories = Category.query.order_by(Category.name).all()
-    templates = Template.query.order_by(Template.name).all()
+    templates = Template.query.filter_by(is_report_clone=False).order_by(Template.name).all()
 
     log_page   = max(1, request.args.get('log_page', 1, type=int))
     log_action = request.args.get('log_action', '').strip()
@@ -215,6 +215,8 @@ def create_template():
 @admin_required
 def delete_template(tpl_id):
     tpl = Template.query.filter_by(public_id=tpl_id).first_or_404()
+    if tpl.is_report_clone:
+        abort(404)
     if tpl.is_default:
         flash('Cannot delete the default template.', 'error')
         return redirect(url_for('admin_bp.index'))

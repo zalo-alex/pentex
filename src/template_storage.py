@@ -1,7 +1,10 @@
+import json
 import os
 import shutil
 from types import SimpleNamespace
 from flask import current_app
+
+_ORDER_FILENAME = '.order.json'
 
 
 def _root_dir():
@@ -13,7 +16,7 @@ def _is_safe_filename(filename):
     # could escape the template's directory once used to build a disk path.
     if not filename or '/' in filename or '\\' in filename or '\x00' in filename:
         return False
-    return filename not in ('.', '..')
+    return filename not in ('.', '..', _ORDER_FILENAME)
 
 
 def _current_dir(template_public_id):
@@ -24,10 +27,40 @@ def _version_dir(template_public_id, version_number):
     return os.path.join(_root_dir(), template_public_id, 'versions', str(version_number))
 
 
+def _read_order(directory):
+    path = os.path.join(directory, _ORDER_FILENAME)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return []
+    if not isinstance(data, list) or not all(isinstance(x, str) for x in data):
+        return []
+    return data
+
+
 def _list_files(directory):
     if not os.path.isdir(directory):
         return []
-    return sorted(f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f)))
+    on_disk = sorted(
+        f for f in os.listdir(directory)
+        if f != _ORDER_FILENAME and os.path.isfile(os.path.join(directory, f))
+    )
+    order = _read_order(directory)
+    on_disk_set = set(on_disk)
+    ordered = [f for f in order if f in on_disk_set]
+    ordered.extend(f for f in on_disk if f not in ordered)
+    return ordered
+
+
+def write_page_order(template_public_id, filenames):
+    directory = _current_dir(template_public_id)
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, _ORDER_FILENAME)
+    tmp_path = path + '.tmp'
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(list(filenames), f)
+    os.replace(tmp_path, path)
 
 
 def _read_file(directory, filename):

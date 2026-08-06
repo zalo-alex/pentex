@@ -34,6 +34,14 @@ for (const page of _initialPages) {
     pages[page.filename] = { content: page.content, result: page.result, savedContent: page.content }
 }
 
+const PINNED_FILENAMES = new Set(['headers.hbs', 'styles.css'])
+
+let pageOrder = _initialPages.map(p => p.filename).filter(f => !PINNED_FILENAMES.has(f))
+let pinnedOrder = _initialPages.map(p => p.filename).filter(f => PINNED_FILENAMES.has(f))
+let draggedFilename = null
+let draggedEl = null
+let placeholderEl = null
+
 function isPageDirty(filename) {
     return pages[filename].content !== pages[filename].savedContent
 }
@@ -74,29 +82,52 @@ function analyzeTemplate(filename, content) {
     return []
 }
 
+function buildPageItem(filename, draggable) {
+    const li = document.createElement('li')
+    li.className = 'template-page-item' + (filename === currentFilename ? ' active' : '')
+    li.dataset.filename = filename
+    li.draggable = draggable
+
+    if (draggable) {
+        const handle = document.createElement('span')
+        handle.className = 'drag-handle'
+        handle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="8" cy="5" r="1.6"/><circle cx="16" cy="5" r="1.6"/><circle cx="8" cy="12" r="1.6"/><circle cx="16" cy="12" r="1.6"/><circle cx="8" cy="19" r="1.6"/><circle cx="16" cy="19" r="1.6"/></svg>'
+        li.appendChild(handle)
+    }
+
+    const label = document.createElement('span')
+    label.textContent = filename
+    label.className = 'template-page-item-label'
+    li.appendChild(label)
+
+    const errorCount = pages[filename].result.length
+    if (errorCount > 0) {
+        const badge = document.createElement('span')
+        badge.className = 'error-badge'
+        badge.textContent = errorCount
+        li.appendChild(badge)
+    }
+
+    li.addEventListener('click', () => selectPage(filename))
+    return li
+}
+
 function renderPageList() {
     const list = document.getElementById('pageList')
     list.innerHTML = ''
-    Object.keys(pages).sort().forEach((filename) => {
-        const li = document.createElement('li')
-        li.className = 'template-page-item' + (filename === currentFilename ? ' active' : '')
-        li.dataset.filename = filename
+    pageOrder.forEach((filename) => list.appendChild(buildPageItem(filename, _isAdmin)))
+}
 
-        const label = document.createElement('span')
-        label.textContent = filename
-        li.appendChild(label)
+function renderPinnedList() {
+    const list = document.getElementById('pinnedPageList')
+    list.innerHTML = ''
+    pinnedOrder.forEach((filename) => list.appendChild(buildPageItem(filename, false)))
+    document.getElementById('pinnedListDivider').style.display = pinnedOrder.length ? '' : 'none'
+}
 
-        const errorCount = pages[filename].result.length
-        if (errorCount > 0) {
-            const badge = document.createElement('span')
-            badge.className = 'error-badge'
-            badge.textContent = errorCount
-            li.appendChild(badge)
-        }
-
-        li.addEventListener('click', () => selectPage(filename))
-        list.appendChild(li)
-    })
+function renderLists() {
+    renderPageList()
+    renderPinnedList()
 }
 
 function updateErrorBadge(filename) {
@@ -180,7 +211,7 @@ function onEditorContentChanged() {
     pages[currentFilename].result = analyzeTemplate(currentFilename, pages[currentFilename].content)
     updateErrorBadge(currentFilename)
     updateMarkers(currentFilename)
-    renderPageList()
+    renderLists()
 
     clearTimeout(previewTimer)
     previewTimer = setTimeout(updatePreview, 300)
@@ -194,7 +225,7 @@ function selectPage(filename) {
     document.getElementById('currentPageName').textContent = filename
     const saveBtn = document.getElementById('saveBtn')
     if (saveBtn) saveBtn.disabled = false
-    renderPageList()
+    renderLists()
     updateErrorBadge(filename)
 
     require(['vs/editor/editor.main'], () => {
@@ -232,7 +263,7 @@ async function savePage() {
     pages[currentFilename] = { content: data.content, result: data.result, savedContent: data.content }
     updateErrorBadge(currentFilename)
     updateMarkers(currentFilename)
-    renderPageList()
+    renderLists()
 }
 
 document.getElementById('saveBtn')?.addEventListener('click', savePage)
@@ -306,5 +337,121 @@ window.addEventListener('beforeunload', (e) => {
     e.returnValue = ''
 })
 
-renderPageList()
+function closestPageItem(target) {
+    return target.closest('.template-page-item')
+}
+
+function createPlaceholder() {
+    const li = document.createElement('li')
+    li.className = 'template-page-item drag-placeholder'
+    return li
+}
+
+function visibleItems(list) {
+    return Array.from(list.children).filter(el => el !== draggedEl)
+}
+
+function capturePositions(list) {
+    const positions = new Map()
+    visibleItems(list).forEach((el) => positions.set(el, el.getBoundingClientRect().top))
+    return positions
+}
+
+function animateFromPositions(list, previousPositions) {
+    visibleItems(list).forEach((el) => {
+        const before = previousPositions.get(el)
+        if (before == null) return
+        const after = el.getBoundingClientRect().top
+        const delta = before - after
+        if (!delta) return
+        el.style.transition = 'none'
+        el.style.transform = `translateY(${delta}px)`
+        requestAnimationFrame(() => {
+            el.style.transition = 'transform 160ms ease'
+            el.style.transform = ''
+        })
+        el.addEventListener('transitionend', () => { el.style.transition = '' }, { once: true })
+    })
+}
+
+async function savePageOrder(previousOrder) {
+    const res = await fetch(`/api/templates/${_templateId}/pages/order`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
+        body: JSON.stringify({ order: pageOrder })
+    })
+    if (!res.ok) {
+        alert('Failed to save the new page order.')
+        pageOrder = previousOrder
+        renderPageList()
+    }
+}
+
+if (_isAdmin) {
+    const list = document.getElementById('pageList')
+
+    list.addEventListener('dragstart', (e) => {
+        const li = closestPageItem(e.target)
+        if (!li) return
+        draggedFilename = li.dataset.filename
+        draggedEl = li
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('text/plain', draggedFilename) // Firefox requires data to allow the drag
+
+        placeholderEl = createPlaceholder()
+        li.parentNode.insertBefore(placeholderEl, li.nextSibling)
+        // Defer hiding so the browser captures the native drag-ghost image first
+        setTimeout(() => li.classList.add('drag-source-hidden'), 0)
+    })
+
+    list.addEventListener('dragover', (e) => {
+        if (!draggedFilename || !placeholderEl) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+
+        const li = closestPageItem(e.target)
+        if (!li || li === placeholderEl) return
+
+        const before = (e.clientY - li.getBoundingClientRect().top) < li.offsetHeight / 2
+        const target = before ? li : li.nextSibling
+        if (placeholderEl.nextSibling === target) return
+
+        const previousPositions = capturePositions(list)
+        list.insertBefore(placeholderEl, target)
+        animateFromPositions(list, previousPositions)
+    })
+
+    function finishDrag(commit) {
+        if (!draggedFilename) return
+        if (commit && placeholderEl) {
+            const newOrder = Array.from(list.children)
+                .filter(el => el !== draggedEl)
+                .map(el => el === placeholderEl ? draggedFilename : el.dataset.filename)
+            const previousOrder = pageOrder.slice()
+            const changed = newOrder.join(' ') !== pageOrder.join(' ')
+            pageOrder = newOrder
+            draggedFilename = null
+            draggedEl = null
+            placeholderEl = null
+            renderPageList()
+            if (changed) savePageOrder(previousOrder)
+            return
+        }
+        draggedFilename = null
+        draggedEl = null
+        placeholderEl = null
+        renderPageList()
+    }
+
+    list.addEventListener('drop', (e) => {
+        e.preventDefault()
+        finishDrag(true)
+    })
+
+    list.addEventListener('dragend', (e) => {
+        finishDrag(e.dataTransfer.dropEffect === 'move')
+    })
+}
+
+renderLists()
 loadCss()

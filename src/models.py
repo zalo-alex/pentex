@@ -37,6 +37,7 @@ class Template(db.Model):
     public_id = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     name = db.Column(db.String(100), unique=True, nullable=False)
     is_default = db.Column(db.Boolean, default=False, nullable=False)
+    is_report_clone = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     versions = db.relationship('TemplateVersion', backref='template', cascade='all, delete-orphan')
 

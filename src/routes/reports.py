@@ -1,5 +1,6 @@
 import io
 import json
+import uuid
 from datetime import date
 from functools import wraps
 
@@ -9,6 +10,7 @@ from werkzeug.utils import secure_filename
 from src.models import db, Report, ReportOwner, User, Category, Template
 from src.log import add_log
 from src.pdf_export import render_html_to_pdf
+from src import template_storage
 
 reports = Blueprint('reports', __name__)
 
@@ -96,7 +98,15 @@ def api_create():
 
     category_id = data.get('category_id') or None
     category = Category.query.filter_by(public_id=category_id).first() if category_id else None
-    template = _resolve_template(category)
+    source_template = _resolve_template(category)
+
+    template = source_template
+    if source_template:
+        template = Template(name=f'__report_clone__{uuid.uuid4().hex}',
+                            is_default=False, is_report_clone=True)
+        db.session.add(template)
+        db.session.flush()  # get template.public_id before it's used as a disk path
+        template_storage.clone_template(source_template.public_id, template.public_id)
 
     report = Report(user_id=current_user.id, name=name,
                     category_id=category.id if category else None,
@@ -175,8 +185,16 @@ def api_delete(id):
     if not _is_owner(report):
         abort(403)
     name = report.name
+    clone = report.template if (report.template and report.template.is_report_clone) else None
+    clone_public_id = clone.public_id if clone else None
+
     db.session.delete(report)
+    if clone:
+        db.session.delete(clone)
     db.session.commit()
+
+    if clone_public_id:
+        template_storage.delete_template(clone_public_id)
     add_log('REPORT_DELETE', detail=name)
     return jsonify({'ok': True})
 
