@@ -15,6 +15,7 @@ from src.routes.reports import reports
 from src.routes.vulnerabilities import vulnerabilities
 from src.routes.templates import templates_bp
 from src.routes.admin import admin_bp
+from src.template_seed import seed_default_template
 
 load_dotenv()
 
@@ -66,6 +67,8 @@ with app.app_context():
             db.session.add(admin_user)
             db.session.commit()
             logging.warning(f'[PENTEX] Admin account created. Temporary password: {temp_password}')
+        if not Template.query.filter_by(is_default=True).first():
+            seed_default_template()
     except Exception:
         db.session.rollback()
 

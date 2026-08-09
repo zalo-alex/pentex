@@ -1,0 +1,80 @@
+<page class="scope-and-conditions-page">
+    <h1>Scope and Conditions</h1>
+
+    <h2>Timeline</h2>
+    <table>
+        <tr>
+            <th>Kick-off Meeting</th>
+            <td>{{keekOffMeetingDate}}</td>
+        </tr>
+        <tr>
+            <th>Start of Assessment</th>
+            <td>{{startOfTestsDate}}</td>
+        </tr>
+        <tr>
+            <th>End of Assessment</th>
+            <td>{{endOfTestsDate}}</td>
+        </tr>
+    </table>
+
+    <h2>Auditors</h2>
+    <table>
+        <tr>
+            <th>Full Name</th>
+            <th>Email</th>
+        </tr>
+        {{#auditors}}
+        <tr>
+            <td>{{fullName}}</td>
+            <td>{{email}}</td>
+        </tr>
+        {{/auditors}}
+    </table>
+
+    <h2>Scope</h2>
+    <table>
+        <tr>
+            <th>Target Asset / Perimeter</th>
+        </tr>
+        {{#scopes}}
+        <tr>
+            <td>{{name}}</td>
+        </tr>
+        {{/scopes}}
+    </table>
+
+    <h2>Provisioned Access</h2>
+    <table>
+        <tr>
+            <th>Identifier</th>
+            <th>Role/Type</th>
+            <th>Resource</th>
+        </tr>
+        {{#testAccess}}
+        <tr>
+            <td>{{identifier}}</td>
+            <td>{{role}}</td>
+            <td>{{resource}}</td>
+        </tr>
+        {{/testAccess}}
+    </table>
+
+    {{#if strength}}
+    <h2>Strengths</h2>
+    <p>{{strength}}</p>
+    {{/if}}
+
+    {{#if (or discoveryApplication discoveryInfra)}}
+    <h2>Discovery Findings</h2>
+    {{#if discoveryApplication}}<p>{{discoveryApplication}}</p>{{/if}}
+    {{#if discoveryInfra}}<p>{{discoveryInfra}}</p>{{/if}}
+    {{/if}}
+
+    {{#if (or account injection upload traces)}}
+    <h2>Testing Artifacts</h2>
+    {{#if account}}<p><b>Accounts created:</b> {{account}}</p>{{/if}}
+    {{#if injection}}<p><b>Injections:</b> {{injection}}</p>{{/if}}
+    {{#if upload}}<p><b>Files uploaded:</b> {{upload}}</p>{{/if}}
+    {{#if traces}}<p><b>Other traces:</b> {{traces}}</p>{{/if}}
+    {{/if}}
+</page>

@@ -1,0 +1,109 @@
+/* PENTEX default report template — bare minimal style */
+
+:root {
+    --text:   #1b2330;
+    --muted:  #5b6472;
+    --border: #d6dbe3;
+
+    --sev-critical: #7a1f2b;
+    --sev-high:     #b3261e;
+    --sev-medium:   #9a5b0c;
+    --sev-low:      #1f6f43;
+    --sev-info:     #2f5fa8;
+}
+
+@page {
+    size: A4;
+    margin: var(--z-56px) var(--z-48px);
+}
+
+page {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: var(--z-13px);
+    line-height: 1.5;
+    color: var(--text);
+}
+
+header, footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--z-10px);
+    color: var(--muted);
+}
+
+header {
+    border-bottom: var(--z-1px) solid var(--border);
+    margin-bottom: var(--z-20px);
+    padding-bottom: var(--z-8px);
+}
+
+footer {
+    border-top: var(--z-1px) solid var(--border);
+    margin-top: var(--z-16px);
+    padding-top: var(--z-6px);
+}
+
+.header-left, .header-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2, h3 {
+    color: var(--text);
+    margin: var(--z-16px) 0 var(--z-8px) 0;
+}
+
+h1 {
+    font-size: var(--z-20px);
+    border-bottom: var(--z-1px) solid var(--border);
+    padding-bottom: var(--z-6px);
+}
+
+h2 { font-size: var(--z-14px); }
+h3 { font-size: var(--z-13px); }
+
+a { color: inherit; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--z-14px);
+    font-size: var(--z-12px);
+}
+
+th, td {
+    text-align: left;
+    padding: var(--z-5px) var(--z-7px);
+    border-bottom: var(--z-1px) solid var(--border);
+}
+
+th { font-weight: 700; }
+
+.label-cell {
+    font-weight: 700;
+    width: var(--z-140px);
+}
+
+.vuln-toc-entry { display: none; }
+
+.vuln-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--z-8px);
+}
+
+.vuln-index { color: var(--muted); }
+
+.sev-badge {
+    padding: var(--z-1px) var(--z-6px);
+    font-size: var(--z-10px);
+    font-weight: 700;
+    color: #fff;
+}
+
+.sev-badge.sev-critical { background: var(--sev-critical); }
+.sev-badge.sev-high     { background: var(--sev-high); }
+.sev-badge.sev-medium   { background: var(--sev-medium); }
+.sev-badge.sev-low      { background: var(--sev-low); }
+.sev-badge.sev-info     { background: var(--sev-info); }

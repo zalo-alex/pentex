@@ -1,0 +1,71 @@
+<page class="methodology-page">
+    <h1>Methodology</h1>
+
+    <h2>Testing Approach</h2>
+    {{#blackBox}}
+    <h3>Black Box Testing</h3>
+    <p>The assessor starts with no prior knowledge of the target beyond publicly available identifiers such as IP addresses, hostnames, or URLs — simulating an external attacker.</p>
+    {{/blackBox}}
+
+    {{#grayBox}}
+    <h3>Gray Box Testing</h3>
+    <p>The assessor works with partial knowledge of the target, supplemented by information supplied by the client, widening the tested surface to authenticated workflows and internal enumeration.</p>
+    {{/grayBox}}
+
+    {{#whiteBox}}
+    <h3>White Box Testing</h3>
+    <p>The assessor has full visibility into the system under test, including source code and configuration, enabling deep analysis of design-level weaknesses.</p>
+    {{/whiteBox}}
+
+    <h2>Reference Standards</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Source</th>
+        </tr>
+        <tr>
+            <td><a href="https://owasp.org/www-project-web-security-testing-guide/" target="_blank">Web Security Testing Guide</a></td>
+            <td>OWASP</td>
+        </tr>
+        <tr>
+            <td><a href="https://owasp.org/www-project-top-ten/" target="_blank">OWASP Top 10</a></td>
+            <td>OWASP</td>
+        </tr>
+        <tr>
+            <td><a href="https://owasp.org/www-project-api-security/" target="_blank">API Security Top 10</a></td>
+            <td>OWASP</td>
+        </tr>
+        <tr>
+            <td><a href="https://csrc.nist.gov/pubs/sp/800/115/final" target="_blank">SP 800-115</a></td>
+            <td>NIST</td>
+        </tr>
+    </table>
+
+    <h2>Severity Scale</h2>
+    <table>
+        <tr>
+            <th>Score</th>
+            <th>Severity</th>
+        </tr>
+        <tr>
+            <td>9.0 &ndash; 10.0</td>
+            <td><span class="sev-badge sev-critical">CRITICAL</span></td>
+        </tr>
+        <tr>
+            <td>7.0 &ndash; 8.9</td>
+            <td><span class="sev-badge sev-high">HIGH</span></td>
+        </tr>
+        <tr>
+            <td>4.0 &ndash; 6.9</td>
+            <td><span class="sev-badge sev-medium">MEDIUM</span></td>
+        </tr>
+        <tr>
+            <td>0.1 &ndash; 3.9</td>
+            <td><span class="sev-badge sev-low">LOW</span></td>
+        </tr>
+        <tr>
+            <td>0.0</td>
+            <td><span class="sev-badge sev-info">INFORMATIONAL</span></td>
+        </tr>
+    </table>
+</page>
