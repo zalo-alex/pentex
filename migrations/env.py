@@ -1,5 +1,4 @@
 import logging
-from logging.config import fileConfig
 
 from flask import current_app
 
@@ -9,9 +8,13 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# Note: deliberately not calling logging.config.fileConfig() here. This env.py
+# always runs inside app.py (both for `flask db ...` CLI commands and for the
+# programmatic upgrade() call at app startup), which already configures the
+# root logger via configure_logging(). fileConfig() would disable that
+# pre-existing logger setup and replace the root handlers with its own,
+# silencing app logging (e.g. the admin password messages) for the rest of
+# the process.
 logger = logging.getLogger('alembic.env')
 
 
