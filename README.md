@@ -9,6 +9,7 @@ A Flask web application for managing penetration testing reports. Security audit
 - **Template system** — Handlebars templates (`static/pages/*.hbs`) render structured sections (title page, findings, executive summary, etc.) directly into the editor
 - **User management** — invite-only registration, admin panel, audit log
 - **PDF export** — server-side rendering via headless Chromium (Playwright), matching report-specific styles
+- **AI translation** *(optional)* — translate vulnerabilities and template pages via an OpenAI-compatible chat completions API, configured in `llm-config.json`
 
 ## Getting started
 
@@ -32,7 +33,28 @@ Create a `.env` file at the project root:
 SECRET_KEY=<random-secret>
 FLASK_DEBUG=false
 ALLOWED_ORIGIN=http://localhost:5000
+LOG_LEVEL=INFO
 ```
+
+## AI translation settings (optional)
+
+Vulnerability and template-page translation call out to an OpenAI-compatible chat completions endpoint. Without this file the rest of the app works normally; only the translate actions fail. Create `llm-config.json` at the project root:
+
+```json
+{
+  "provider": {
+    "my-provider": {
+      "options": {
+        "baseURL": "https://api.example.com/v1",
+        "apiKey": "<api-key>"
+      }
+    }
+  },
+  "model": "my-provider/<model-name>"
+}
+```
+
+`baseURL` is queried at `<baseURL>/chat/completions`; `model` is sent as `<model-name>` (everything after the first `/`).
 
 ## Project structure
 
@@ -72,4 +94,4 @@ flask db migrate -m "description"
 flask db upgrade
 ```
 
-SQLite database is stored at `instance/pentex.db` (not committed to git).
+SQLite database is stored at `instance/pentex.db`
