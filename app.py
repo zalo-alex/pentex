@@ -5,7 +5,7 @@ import secrets
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, abort, redirect, url_for
 from flask_login import LoginManager, login_required, current_user
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 from flask_socketio import SocketIO, join_room, emit
 from flask_wtf.csrf import CSRFProtect
 from src.models import db, User, Report, ReportOwner, Template
@@ -60,7 +60,7 @@ app.register_blueprint(admin_bp)
 
 with app.app_context():
     try:
-        db.create_all()
+        upgrade()
         if not User.query.filter_by(username='admin').first():
             admin_user = User(username='admin', is_admin=True)
             temp_password = secrets.token_urlsafe(16)
