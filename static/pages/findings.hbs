@@ -11,31 +11,36 @@
             <td>{{classification}}</td>
         </tr>
         <tr>
-            <td class="label-cell">Severity</td>
+            <td class="label-cell">Sévérité</td>
             <td>
                 <span class="sev-badge sev-{{severityLevel}}">{{severity}}</span>
-                {{cvss}}/10.0 &mdash; <a href="https://www.first.org/cvss/calculator/3.1#{{cvssString}}">CVSS Details</a>
+                {{cvss}}/10.0 &mdash; <a href="https://www.first.org/cvss/calculator/3.1#{{cvssString}}">Détails CVSS</a>
             </td>
         </tr>
         <tr>
-            <td class="label-cell">Attack Surface</td>
+            <td class="label-cell">Surface d'attaque</td>
             <td>{{affected}}</td>
         </tr>
         <tr>
-            <td class="label-cell">Remediation</td>
-            <td>Priority: {{remediationPriority}} &bull; Complexity: {{remediationComplexity}}</td>
+            <td class="label-cell">Remédiation</td>
+            <td>Priorité : {{remediationPriority}} &bull; Complexité : {{remediationComplexity}}</td>
         </tr>
     </table>
 
     <h3>Description</h3>
     {{{description}}}
 
+    {{#if observation}}
+    <h3>Observation</h3>
+    {{{observation}}}
+    {{/if}}
+
     <h3>Impact</h3>
     <table>
         <tr>
-            <th>Confidentiality</th>
-            <th>Integrity</th>
-            <th>Availability</th>
+            <th>Confidentialité</th>
+            <th>Intégrité</th>
+            <th>Disponibilité</th>
         </tr>
         <tr>
             <td>{{cvssImpactText.C}}</td>
@@ -44,11 +49,16 @@
         </tr>
     </table>
 
-    <h3>Remediation</h3>
+    <h3>Remédiation</h3>
     {{{remediation}}}
 
-    <h3>Proof of Concept</h3>
+    {{#if references}}
+    <h3>Références</h3>
+    {{{references}}}
+    {{/if}}
+
+    <h3>Preuve de concept</h3>
     {{{poc}}}
 
-    <a href="#vulnerabilities-abstract">Back to findings overview</a>
+    <a href="#vulnerabilities-abstract">Retour à la synthèse des vulnérabilités</a>
 </page>

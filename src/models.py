@@ -38,6 +38,8 @@ class Template(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     is_default = db.Column(db.Boolean, default=False, nullable=False)
     is_report_clone = db.Column(db.Boolean, default=False, nullable=False)
+    language = db.Column(db.String(5), nullable=False, default='FR')
+    translation_group_id = db.Column(db.String(36), index=True, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     versions = db.relationship('TemplateVersion', backref='template', cascade='all, delete-orphan')
 
@@ -66,6 +68,17 @@ class TemplateVersion(db.Model):
         # the DB only tracks version metadata.
         from src.template_storage import version_pages
         return version_pages(self.template.public_id, self.version_number)
+
+
+class TranslationRule(db.Model):
+    __tablename__ = 'translation_rule'
+    id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    text = db.Column(db.Text, nullable=False)
+    source = db.Column(db.String(20), nullable=False, default='manual')  # 'manual' | 'auto'
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='SET NULL'), nullable=True)
+    created_by_username = db.Column(db.String(64), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Asset(db.Model):
@@ -102,6 +115,7 @@ class Report(db.Model):
     content = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
     template_id = db.Column(db.Integer, db.ForeignKey('template.id'), nullable=True)
+    language = db.Column(db.String(5), nullable=False, default='FR')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     owners   = db.relationship('User',     secondary='report_owner', lazy='joined')
@@ -133,5 +147,9 @@ class Vulnerability(db.Model):
     remediation_complexity = db.Column(db.String(20), default='Low')
     remediation_priority = db.Column(db.String(20), default='Low')
     remediation = db.Column(db.Text)
+    observation = db.Column(db.Text)
+    references = db.Column(db.Text)
+    language = db.Column(db.String(5), nullable=False, default='FR')
+    translation_group_id = db.Column(db.String(36), index=True, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     category = db.relationship('Category', foreign_keys=[category_id])

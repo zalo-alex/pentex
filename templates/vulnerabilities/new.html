@@ -39,6 +39,13 @@
                         {% endfor %}
                     </select>
                 </label>
+                <label class="label-input">
+                    Language
+                    <select name="language">
+                        <option value="FR" selected>French</option>
+                        <option value="EN">English</option>
+                    </select>
+                </label>
             </div>
 
             <h2 class="form-section-title">Description</h2>
@@ -49,6 +56,17 @@
                 </div>
                 <div class="editor-content">
                     <textarea id="description" name="description"></textarea>
+                </div>
+            </div>
+
+            <h2 class="form-section-title">Observation</h2>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>Observation</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="observation" name="observation"></textarea>
                 </div>
             </div>
 
@@ -85,6 +103,17 @@
                 </div>
                 <div class="editor-content">
                     <textarea id="remediation" name="remediation"></textarea>
+                </div>
+            </div>
+
+            <h2 class="form-section-title">References</h2>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>References</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="references" name="references"></textarea>
                 </div>
             </div>
 

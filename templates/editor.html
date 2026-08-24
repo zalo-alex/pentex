@@ -40,6 +40,7 @@
             <button class="button">Executive</button>
             <button class="button">Traces</button>
             <button class="button">Discovery</button>
+            <button class="button">Test Overview</button>
             <button class="button">Observations</button>
             <button class="button">Findings</button>
             <button class="button">Project</button>
@@ -190,7 +191,7 @@
             </div>
         </div>
 
-        <script>const _reportId = {{ report.public_id | tojson }};</script>
+        <script>const _reportId = {{ report.public_id | tojson }}; const _reportLanguage = {{ (report.language or 'FR') | tojson }};</script>
         <script src="/static/js/editor_owners.js"></script>
 
         <div class="page executive" style="display: none;">
@@ -281,21 +282,248 @@
         </div>
 
         <div class="page discovery" style="display: none;">
-            <h2>Application</h2>
+            <h2>Attack Surface</h2>
             <div class="section-card">
                 <label class="label-input">
-                    Noteworthy Elements (Application)
-                    <textarea placeholder="Noteworthy elements of the attack surface (Application)" data-bind="global.discoveryApplication"></textarea>
+                    Entry Points / URLs
+                    <div class="tag-field" data-tags="discoveryEntryPoints">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="https://app.target.com — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Related Subdomains
+                    <div class="tag-field" data-tags="discoverySubdomains">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="admin.target.com — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Technologies Identified
+                    <div class="tag-field" data-tags="discoveryTechnologies">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="ReactJS, Laravel, WordPress… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Server-side Language / Platform
+                    <input type="text" placeholder="PHP 8.x, Node.js, Java Spring, ASP.NET…" data-bind="global.discoveryServerPlatform">
                 </label>
             </div>
 
-            <h2>Infrastructure</h2>
+            <h2>Client & Auth</h2>
             <div class="section-card">
                 <label class="label-input">
-                    Noteworthy Elements (Infrastructure)
-                    <textarea placeholder="Noteworthy elements of the attack surface (Infrastructure)" data-bind="global.discoveryInfra"></textarea>
+                    Client-side Technologies
+                    <div class="pill-group" data-pills="discoveryClientTech">
+                        <button type="button" class="pill-btn" data-value="SPA">SPA</button>
+                        <button type="button" class="pill-btn" data-value="AJAX">AJAX</button>
+                        <button type="button" class="pill-btn" data-value="WebAssembly">WebAssembly</button>
+                        <button type="button" class="pill-btn" data-value="Heavy JS Framework">Heavy JS Framework</button>
+                    </div>
+                    <div class="tag-field" data-tags="discoveryClientTech">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Other… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Authentication Mechanisms
+                    <div class="pill-group" data-pills="discoveryAuthMechanisms">
+                        <button type="button" class="pill-btn" data-value="Login Form">Login Form</button>
+                        <button type="button" class="pill-btn" data-value="SSO (OAuth)">SSO (OAuth)</button>
+                        <button type="button" class="pill-btn" data-value="SSO (SAML)">SSO (SAML)</button>
+                        <button type="button" class="pill-btn" data-value="MFA">MFA</button>
+                        <button type="button" class="pill-btn" data-value="JWT">JWT</button>
+                    </div>
+                    <div class="tag-field" data-tags="discoveryAuthMechanisms">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Other… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Session Management
+                    <div class="pill-group" data-pills="discoverySessionManagement">
+                        <button type="button" class="pill-btn" data-value="Cookies">Cookies</button>
+                        <button type="button" class="pill-btn" data-value="Tokens">Tokens</button>
+                        <button type="button" class="pill-btn" data-value="localStorage">localStorage</button>
+                        <button type="button" class="pill-btn" data-value="Server-side Sessions">Server-side Sessions</button>
+                    </div>
+                    <div class="tag-field" data-tags="discoverySessionManagement">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Other… — press Enter to add">
+                    </div>
                 </label>
             </div>
+
+            <h2>Application Map</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Mapped Features / Pages
+                    <div class="tag-field" data-tags="discoveryMappedFeatures">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Login, Registration, Admin panel… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    External Integrations / Third-party Services
+                    <div class="tag-field" data-tags="discoveryIntegrations">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Stripe, Google Maps, Firebase… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Discovered API Endpoints
+                    <div class="tag-field" data-tags="discoveryApiEndpoints">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="/api/user, /graphql… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Identified Parameters / Input Fields
+                    <div class="tag-field" data-tags="discoveryParameters">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="id, token, redirect_url… — press Enter to add">
+                    </div>
+                </label>
+            </div>
+
+            <h2>Behavior Observed</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Static & Dynamic Content Observed
+                    <textarea placeholder="JS/CSS/image resources and dynamic UI behavior" data-bind="global.discoveryStaticDynamicContent"></textarea>
+                </label>
+                <label class="label-input">
+                    Access Control Behavior Observed
+                    <textarea placeholder="Pages accessible per role, restricted sections, redirections…" data-bind="global.discoveryAccessControlBehavior"></textarea>
+                </label>
+                <label class="label-input">
+                    Security Headers Observed
+                    <div class="pill-group" data-pills="discoverySecurityHeaders">
+                        <button type="button" class="pill-btn" data-value="CSP">CSP</button>
+                        <button type="button" class="pill-btn" data-value="HSTS">HSTS</button>
+                        <button type="button" class="pill-btn" data-value="X-Frame-Options">X-Frame-Options</button>
+                        <button type="button" class="pill-btn" data-value="X-Content-Type-Options">X-Content-Type-Options</button>
+                        <button type="button" class="pill-btn" data-value="Referrer-Policy">Referrer-Policy</button>
+                        <button type="button" class="pill-btn" data-value="Permissions-Policy">Permissions-Policy</button>
+                        <button type="button" class="pill-btn" data-value="None Observed">None Observed</button>
+                    </div>
+                    <div class="tag-field" data-tags="discoverySecurityHeaders">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Other… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Additional Notes
+                    <textarea placeholder="Anything else worth noting that doesn't fit the fields above" data-bind="global.discoveryApplication"></textarea>
+                </label>
+            </div>
+
+            <h2>Network & Hosts</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    IP Addresses / CIDR Ranges
+                    <div class="tag-field" data-tags="discoveryIpRanges">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="10.0.0.0/24, 192.168.1.10… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Subdomains & DNS Entries
+                    <div class="tag-field" data-tags="discoveryDnsEntries">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="mail.target.com, ns1.target.com… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Open Ports & Exposed Services
+                    <div class="tag-field" data-tags="discoveryOpenPorts">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="443 (HTTPS), 22 (SSH), 3306 (MySQL)… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Service Banners & Versions
+                    <div class="tag-field" data-tags="discoveryServiceBanners">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Apache/2.4.54, nginx 1.18, OpenSSH_8.4… — press Enter to add">
+                    </div>
+                </label>
+            </div>
+
+            <h2>Environment</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Hosting Provider / Cloud Environment
+                    <input type="text" placeholder="AWS, Azure, OVH, on-premise…" data-bind="global.discoveryHostingProvider">
+                </label>
+                <label class="label-input">
+                    WAF / Load Balancer / Reverse Proxy
+                    <div class="pill-group" data-pills="discoveryWafLb">
+                        <button type="button" class="pill-btn" data-value="Cloudflare">Cloudflare</button>
+                        <button type="button" class="pill-btn" data-value="AWS ELB">AWS ELB</button>
+                        <button type="button" class="pill-btn" data-value="F5">F5</button>
+                        <button type="button" class="pill-btn" data-value="Imperva">Imperva</button>
+                        <button type="button" class="pill-btn" data-value="None Observed">None Observed</button>
+                    </div>
+                    <div class="tag-field" data-tags="discoveryWafLb">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Other… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    SSL/TLS Certificate Details
+                    <textarea placeholder="Validity, SAN, certificate authority, self-signed or not…" data-bind="global.discoveryTlsCertDetails"></textarea>
+                </label>
+                <label class="label-input">
+                    HTTP Header Fingerprinting
+                    <div class="tag-field" data-tags="discoveryHttpFingerprint">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Server: nginx, X-Powered-By: PHP… — press Enter to add">
+                    </div>
+                </label>
+            </div>
+
+            <h2>Exposed Services</h2>
+            <div class="section-card">
+                <label class="label-input">
+                    Internal / Email Services Exposed
+                    <div class="tag-field" data-tags="discoveryInternalServices">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="mail.target.com, SMTP/IMAP/RDP… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    VPN / Remote Access Portals
+                    <div class="tag-field" data-tags="discoveryRemoteAccess">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="vpn.target.com, Citrix, RDWeb, TeamViewer… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Staging / Test / Backup Environments
+                    <div class="tag-field" data-tags="discoveryStagingEnvs">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="staging.target.com, backup.target.com… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Debug / Monitoring / Logging Services
+                    <div class="tag-field" data-tags="discoveryDebugServices">
+                        <div class="tag-list"></div>
+                        <input type="text" class="tag-input-field" placeholder="Sentry, Kibana, Prometheus, Grafana… — press Enter to add">
+                    </div>
+                </label>
+                <label class="label-input">
+                    Additional Notes
+                    <textarea placeholder="Anything else worth noting that doesn't fit the fields above" data-bind="global.discoveryInfra"></textarea>
+                </label>
+            </div>
+        </div>
+
+        <div class="page testoverview" style="display: none;">
+            <h2>WSTG Test Overview</h2>
+            <div id="wstgSidebarContainer"></div>
         </div>
 
         <div class="page observations" style="display: none;">
@@ -349,6 +577,15 @@
                         </div>
                         <div class="editor-content">
                             <textarea id="desc-$(zid)" placeholder="Describe the vulnerability"></textarea>
+                        </div>
+                    </div>
+                    <div class="editor-section">
+                        <div class="editor-header" onclick="toggleEditor(this)">
+                            <span>Observation</span>
+                            <span class="editor-toggle">▼</span>
+                        </div>
+                        <div class="editor-content">
+                            <textarea id="obs-$(zid)" placeholder="Observed impact / findings"></textarea>
                         </div>
                     </div>
                     <div class="input-row">
@@ -458,6 +695,15 @@
                         </div>
                         <div class="editor-content">
                             <textarea id="remed-$(zid)" placeholder="Describe how to fix the vulnerability"></textarea>
+                        </div>
+                    </div>
+                    <div class="editor-section">
+                        <div class="editor-header" onclick="toggleEditor(this)">
+                            <span>References</span>
+                            <span class="editor-toggle">▼</span>
+                        </div>
+                        <div class="editor-content">
+                            <textarea id="refs-$(zid)" placeholder="CWE, CVE, OWASP references..."></textarea>
                         </div>
                     </div>
                     <div class="editor-section">

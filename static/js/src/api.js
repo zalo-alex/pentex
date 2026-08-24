@@ -1,5 +1,6 @@
-export async function apiGetVulnerabilities() {
-    const res = await fetch('/api/vulnerabilities')
+export async function apiGetVulnerabilities(language) {
+    const url = language ? `/api/vulnerabilities?language=${encodeURIComponent(language)}` : '/api/vulnerabilities'
+    const res = await fetch(url)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return await res.json()
 }

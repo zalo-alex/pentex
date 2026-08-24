@@ -31,10 +31,23 @@ def auditor_required(f):
     return decorated
 
 
-def _resolve_template(category):
-    if category and category.template:
-        return category.template
-    return Template.query.filter_by(is_default=True).first()
+def _resolve_template(category, language='FR'):
+    """A category points at one Template row, but that row represents a FR/EN pair (linked via
+    translation_group_id) rather than a single-language template. Resolve to whichever sibling
+    matches the report's language, falling back to the category's own template (untranslated)
+    if no matching-language sibling exists yet."""
+    base = category.template if (category and category.template) else Template.query.filter_by(is_default=True).first()
+    if not base:
+        return None, False
+    if (base.language or 'FR') == language:
+        return base, True
+    if base.translation_group_id:
+        match = Template.query.filter_by(
+            translation_group_id=base.translation_group_id, language=language, is_report_clone=False,
+        ).first()
+        if match:
+            return match, True
+    return base, False
 
 
 def _default_report_content(user, template):
@@ -96,9 +109,13 @@ def api_create():
     if not name:
         return jsonify({'error': 'Name is required'}), 400
 
+    language = (data.get('language') or 'FR').upper()
+    if language not in ('FR', 'EN'):
+        language = 'FR'
+
     category_id = data.get('category_id') or None
     category = Category.query.filter_by(public_id=category_id).first() if category_id else None
-    source_template = _resolve_template(category)
+    source_template, language_matched = _resolve_template(category, language)
 
     template = source_template
     if source_template:
@@ -111,13 +128,21 @@ def api_create():
     report = Report(user_id=current_user.id, name=name,
                     category_id=category.id if category else None,
                     template_id=template.id if template else None,
+                    language=language,
                     content=_default_report_content(current_user, template))
     db.session.add(report)
     db.session.flush()  # get report.id before commit
     db.session.add(ReportOwner(report_id=report.id, user_id=current_user.id))
     db.session.commit()
     add_log('REPORT_CREATE', detail=report.name)
-    return jsonify({'id': report.public_id, 'name': report.name}), 201
+
+    result = {'id': report.public_id, 'name': report.name}
+    if source_template and not language_matched:
+        result['warning'] = (
+            f'No {language} version of "{source_template.name}" exists yet — used the '
+            f'{source_template.language} template instead. Translate it from the template editor to fix this.'
+        )
+    return jsonify(result), 201
 
 
 @reports.route('/api/reports/<string:id>')
@@ -131,6 +156,7 @@ def api_get(id):
         'name': report.name,
         'content': report.content,
         'category_id': report.category.public_id if report.category else None,
+        'language': report.language or 'FR',
     })
 
 
@@ -174,6 +200,9 @@ def api_update(id):
         category_id = data['category_id'] or None
         category = Category.query.filter_by(public_id=category_id).first() if category_id else None
         report.category_id = category.id if category else None
+    if 'language' in data:
+        language = (data['language'] or 'FR').upper()
+        report.language = language if language in ('FR', 'EN') else 'FR'
     db.session.commit()
     return jsonify({'id': report.public_id, 'name': report.name})
 

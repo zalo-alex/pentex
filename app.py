@@ -2,7 +2,6 @@ import os
 import sys
 import argparse
 import secrets
-import logging
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, abort, redirect, url_for
 from flask_login import LoginManager, login_required, current_user
@@ -16,10 +15,12 @@ from src.routes.vulnerabilities import vulnerabilities
 from src.routes.templates import templates_bp
 from src.routes.admin import admin_bp
 from src.template_seed import seed_default_template
+from src.logging_config import configure_logging, print_banner
 
 load_dotenv()
 
 app = Flask(__name__)
+logger = configure_logging(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pentex.db'
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600
@@ -66,10 +67,12 @@ with app.app_context():
             admin_user.set_password(temp_password)
             db.session.add(admin_user)
             db.session.commit()
-            logging.warning(f'[PENTEX] Admin account created. Temporary password: {temp_password}')
+            logger.warning('Admin account created. Temporary password: %s', temp_password)
         if not Template.query.filter_by(is_default=True).first():
             seed_default_template()
+            logger.info('Default template seeded')
     except Exception:
+        logger.exception('Startup initialization failed')
         db.session.rollback()
 
 
@@ -204,7 +207,7 @@ def _reset_admin_password():
         new_password = secrets.token_urlsafe(16)
         admin_user.set_password(new_password)
         db.session.commit()
-        print(f'[PENTEX] Admin password reset. New password: {new_password}')
+        logger.warning('Admin password reset. New password: %s', new_password)
 
 
 if __name__ == '__main__':
@@ -218,4 +221,6 @@ if __name__ == '__main__':
         sys.exit(0)
 
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    print_banner()
+    logger.info('PENTEX starting on 0.0.0.0:5000 (debug=%s)', debug)
     socketio.run(app, host="0.0.0.0", debug=debug)

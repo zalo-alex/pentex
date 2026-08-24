@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% from "macros/flag.html" import render as flag %}
 
 {% block title %}{{ template.name }} - Templates{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/templates.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
 <script>
     require.config({
@@ -29,14 +31,64 @@
     </div>
 
     <div class="template-editor-main">
+        {% if template.language == 'EN' %}
+        <div class="template-translation-banner">
+            <strong>Auto-translated English copy</strong>
+            Changes made here are saved only to this English template{% if translation %} and will
+            <u>not</u> be reflected back to the original French template &ldquo;{{ translation.name }}&rdquo;{% endif %}.
+        </div>
+        {% endif %}
         <div class="template-editor-toolbar">
             <span id="currentPageName">Select a page</span>
             <span id="errorBadge" class="error-badge" style="display:none"></span>
+
+            <div class="template-toolbar-group">
+                {% if translation %}
+                <a href="{{ url_for('templates_bp.edit', template_id=translation.public_id) }}" class="editor-icon-btn editor-icon-btn-secondary" title="View {{ translation.language }} version">
+                    {{ flag(translation.language) }}
+                </a>
+                {% if is_admin and (template.language or 'FR') != 'EN' %}
+                <button type="button" class="editor-icon-btn" id="retranslateTemplateBtn"
+                        data-target-lang="{{ translation.language }}" data-force="true" data-target-name="{{ translation.name }}"
+                        onclick="openTemplateTranslateDialog(this)"
+                        title="Re-translate to {{ translation.language }} — regenerate &quot;{{ translation.name }}&quot; from this template's current content (its existing content is saved as a version first)">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M9.01 14H2v2h7.01v3L13 15l-3.99-4v3zm5.98-1v-3H22V8h-7.01V5L11 9l3.99 4z"/></svg>
+                </button>
+                {% endif %}
+                {% elif is_admin and (template.language or 'FR') != 'EN' %}
+                <button type="button" class="editor-icon-btn" id="translateTemplateBtn"
+                        data-target-lang="EN" onclick="openTemplateTranslateDialog(this)" title="Translate to EN">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M9.01 14H2v2h7.01v3L13 15l-3.99-4v3zm5.98-1v-3H22V8h-7.01V5L11 9l3.99 4z"/></svg>
+                </button>
+                {% endif %}
+                {% if is_admin and (template.language or 'FR') != 'EN' %}
+                <button class="editor-icon-btn editor-icon-btn-secondary" id="rulesBtn" type="button" title="Translation Rules">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M3 5h2v2H3zm4 0h14v2H7zm-4 6h2v2H3zm4 0h14v2H7zm-4 6h2v2H3zm4 0h14v2H7z"/></svg>
+                </button>
+                {% endif %}
+            </div>
+
             {% if is_admin %}
+            <span class="template-toolbar-divider"></span>
+
+            <div class="template-toolbar-group">
+                <button class="editor-icon-btn editor-icon-btn-secondary" id="createVersionBtn" type="button" title="Create Version">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+                </button>
+                <button class="editor-icon-btn editor-icon-btn-secondary" id="versionsBtn" type="button" title="Versions">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                </button>
+            </div>
+
+            <span class="template-toolbar-divider"></span>
+
             <button class="editor-save-btn" id="saveBtn" type="button" disabled>Save</button>
-            <button class="editor-version-btn" id="createVersionBtn" type="button">Create Version</button>
+            {% else %}
+            <span class="template-toolbar-divider"></span>
+            <button class="editor-icon-btn editor-icon-btn-secondary" id="versionsBtn" type="button" title="Versions">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+            </button>
             {% endif %}
-            <button class="editor-version-btn editor-version-btn-secondary" id="versionsBtn" type="button">Versions</button>
         </div>
         <div id="monacoContainer" class="monaco-container"></div>
     </div>
@@ -53,6 +105,51 @@
         <button id="versionsPanelClose" class="versions-panel-close" type="button">&times;</button>
     </div>
     <ul id="versionList"></ul>
+</div>
+
+<div id="rulesPanel" class="versions-panel" hidden>
+    <div class="versions-panel-header">
+        <span>Translation Rules</span>
+        <button id="rulesPanelClose" class="versions-panel-close" type="button">&times;</button>
+    </div>
+    <p class="rules-panel-hint">Applies to every French&rarr;English template translation, not just this one.</p>
+    <div class="rule-add-row">
+        <textarea id="newRuleText" placeholder='e.g. Use &quot;malicious actor&quot; instead of &quot;attacker&quot;' rows="2"></textarea>
+        <button id="addRuleBtn" class="editor-version-btn" type="button">Add</button>
+    </div>
+    <ul id="ruleList"></ul>
+</div>
+
+<div class="dialog-container" id="templateTranslateDialog">
+    <div class="dialog">
+        <h3 id="templateTranslateDialogTitle">Translating&hellip;</h3>
+        <p id="templateTranslateStatusText">Starting translation&hellip;</p>
+        <div class="progress-track"><div class="progress-fill" id="templateTranslateProgressFill"></div></div>
+        <p id="templateTranslateCounts" class="progress-counts"></p>
+        <div class="dialog-actions">
+            <button type="button" class="btn-secondary" id="templateTranslateCloseBtn" style="display:none" onclick="closeTemplateTranslateDialog()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-container" id="translateChangesDialog">
+    <div class="dialog dialog-wide">
+        <h3>Review before re-translating</h3>
+        <p id="translateChangesIntro">These differences from the last auto-translation were found in the current English content.
+           Checked items become permanent translation rules and apply to this re-translation too.</p>
+        <div id="translateChangesWarning" class="translate-no-baseline-warning" style="display:none">
+            <strong>No translation history for some pages</strong>
+            <p>Hand edits on <span id="translateChangesWarningPages"></span> can't be detected (no baseline
+               recorded for them yet — usually because they were translated before this feature existed).
+               They'll be overwritten by this re-translation. A backup version is still saved automatically
+               first, so anything on those pages is recoverable from the Versions panel if needed.</p>
+        </div>
+        <ul id="translateChangesList" class="rule-checklist"></ul>
+        <div class="dialog-actions">
+            <button type="button" class="btn-secondary" id="translateChangesCancelBtn">Cancel</button>
+            <button type="button" class="editor-version-btn" id="translateChangesContinueBtn">Continue</button>
+        </div>
+    </div>
 </div>
 
 <script type="module" src="/static/js/template_editor.js"></script>

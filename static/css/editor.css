@@ -83,15 +83,16 @@ body {
 
         .button {
             flex: 1;
-            padding: 14px 20px;
+            padding: 14px 10px;
             cursor: pointer;
             background: none;
             border: none;
             color: #666;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
             transition: all 0.2s ease;
             position: relative;
 
@@ -637,9 +638,261 @@ button {
     }
 }
 
+/* Tag fields (chip input) */
+.tag-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    transition: all 0.2s ease;
+
+    &:focus-within {
+        border-color: #c41e3a;
+        box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+    }
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 4px 10px;
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: nowrap;
+}
+
+.tag-chip-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    font-size: 13px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(196, 30, 58, 0.15);
+        color: #c41e3a;
+    }
+}
+
+.tag-input-field {
+    flex: 1 1 120px;
+    min-width: 120px;
+    border: none !important;
+    padding: 4px !important;
+    box-shadow: none !important;
+    text-transform: none;
+
+    &:focus {
+        box-shadow: none !important;
+    }
+}
+
+/* Pill groups (multi-select quick-pick presets) */
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.pill-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: #c41e3a;
+        color: #c41e3a;
+    }
+
+    &.active {
+        background: #c41e3a;
+        border-color: #c41e3a;
+        color: white;
+    }
+}
+
 /* editor.css-specific TinyMCE override */
 .label-input .tox-tinymce {
     width: 100%;
+}
+
+/* WSTG test overview — reuses .editor-section (collapsible, from cvss_shared.css)
+   and .list-input-item (from the auditors/scopes lists above) rather than
+   introducing new container components. */
+.wstg-test-list {
+    /* Overrides the shared .list-input-container's gap — scoped here so
+       auditors/scopes/etc. elsewhere in the sidebar keep their own spacing. */
+    gap: 0;
+    margin-bottom: 16px;
+}
+
+.wstg-test-row {
+    /* Overrides the shared .list-input-item's gap for the same reason. */
+    gap: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+}
+
+/* Scoped to .editor-content specifically because only the WSTG proof-of-testing
+   field nests a .label-input here — findings' Description/Observation/etc. use a
+   bare textarea with no .label-input wrapper, so this can't leak into them. */
+.editor-content .label-input {
+    padding: 16px;
+}
+
+.wstg-test-main-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.wstg-test-id {
+    flex: 0 0 auto;
+    font-family: monospace;
+    font-size: 10px;
+    color: #999;
+}
+
+.wstg-test-name {
+    flex: 1 1 140px;
+    font-size: 13px;
+    color: #333;
+}
+
+.wstg-tested-btn {
+    flex: 0 0 auto;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #666;
+    cursor: pointer;
+    transition: all .15s;
+
+    &:hover {
+        border-color: #c41e3a;
+        color: #c41e3a;
+    }
+
+    &.active {
+        background: #c41e3a;
+        border-color: #c41e3a;
+        color: #fff;
+    }
+}
+
+.wstg-finding-picker {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.wstg-finding-toggle {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #888;
+    cursor: pointer;
+
+    &:hover {
+        border-color: #c41e3a;
+        color: #c41e3a;
+        background: #fff0f2;
+    }
+}
+
+.wstg-finding-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .12);
+
+    &[hidden] {
+        display: none;
+    }
+
+    .pill-btn {
+        text-align: left;
+        white-space: normal;
+    }
+}
+
+.wstg-finding-empty {
+    padding: 8px;
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+}
+
+.wstg-finding-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.wstg-finding-badges:not(:empty) {
+    margin-top: 6px;
+}
+
+.wstg-finding-badge {
+    font-size: 11px;
+    cursor: default;
 }
 
 /* Add Finding Dialog */
@@ -762,6 +1015,42 @@ button {
     font-size: 14px;
     text-align: center;
     margin: 0;
+}
+
+.vuln-picker-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vuln-picker-lang-tag {
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #c41e3a;
+    vertical-align: middle;
+}
+
+.vuln-picker-lang-btn {
+    padding: 3px 8px;
+    background: #fff;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.vuln-picker-lang-btn:hover {
+    border-color: #c41e3a;
+    color: #c41e3a;
+}
+
+.vuln-picker-lang-btn:disabled {
+    cursor: default;
+    opacity: .6;
 }
 
 .add-finding-dialog .badge {

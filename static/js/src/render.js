@@ -1,6 +1,7 @@
 import { getTemplate, rawTemplateCache } from "./templates.js";
 
 import { pagesCount } from "./store.js";
+import { WSTG_CATEGORIES } from "./wstg_catalog.js";
 
 let figureIndex = 0
 let figures = []
@@ -23,7 +24,19 @@ export const renderHTML = () => {
             let template = getTemplate(pageName, i)
             // TODO: refactor computed template data (indexedFindings, etc.) into a dedicated function
             const indexedFindings = (dataStore.pages.findings || []).map((f, idx) => ({ ...f, index: idx + 1 }))
-            let finalData = { ...dataStore.global, ...dataStore.pages, findings: indexedFindings, figures, ...currentPageData, index: i+1, lastVersion: () => dataStore.global.versionHistory.at(-1)?.version }
+            const wstgCategories = WSTG_CATEGORIES.map(cat => ({
+                ...cat,
+                proof: (dataStore.global.wstgProof || {})[cat.id] || '',
+                tests: cat.tests.map(t => {
+                    const result = (dataStore.global.wstgResults || {})[t.id] || {}
+                    const vulnFindings = (result.findingIndexes || [])
+                        .map(idx => indexedFindings[idx])
+                        .filter(Boolean)
+                        .map(f => ({ index: f.index, name: f.name }))
+                    return { ...t, tested: !!result.tested, vulnFindings }
+                }),
+            }))
+            let finalData = { ...dataStore.global, ...dataStore.pages, findings: indexedFindings, figures, wstgCategories, ...currentPageData, index: i+1, lastVersion: () => dataStore.global.versionHistory.at(-1)?.version }
             const renderedPage = template(finalData)
             
             // This could break templates, it should be parsing HTML right, but it adds <html><head><body>

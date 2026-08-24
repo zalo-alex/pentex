@@ -12,6 +12,10 @@ instance/
 *.sqlite3
 *.sqlite
 
+# Logs
+logs/
+*.log
+
 # Python
 __pycache__/
 *.py[cod]
@@ -31,3 +35,5 @@ env/
 *.swo
 *~
 .DS_Store
+
+llm-config.json

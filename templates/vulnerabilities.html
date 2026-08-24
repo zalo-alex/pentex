@@ -12,7 +12,10 @@
 <div class="list-page">
     <div class="page-header">
         <h1>Vulnerabilities</h1>
-        <a href="{{ url_for('vulnerabilities.new') }}" class="btn-primary">New Vulnerability</a>
+        <div style="display:flex; gap:8px">
+            <button type="button" class="btn-secondary" onclick="openImportDialog()">Import from PwnDoc-NG</button>
+            <a href="{{ url_for('vulnerabilities.new') }}" class="btn-primary">New Vulnerability</a>
+        </div>
     </div>
 
     <div class="list-card">
@@ -57,6 +60,28 @@
         {% else %}
         <p class="empty">No vulnerabilities yet.</p>
         {% endif %}
+    </div>
+</div>
+
+<div class="dialog-container" id="importDialog" onclick="if(event.target===this)closeImportDialog()">
+    <div class="dialog">
+        <h3>Import from PwnDoc-NG</h3>
+        <form id="importForm" onsubmit="return startImport(event)">
+            <p>Upload a PwnDoc-NG vulnerability database export (.yml/.yaml/.json). Entries missing a French or English version are automatically translated.</p>
+            <input type="file" name="file" id="importFile" accept=".yml,.yaml,.json" required>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeImportDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Import</button>
+            </div>
+        </form>
+        <div id="importProgress" style="display:none">
+            <p id="importProgressText">Starting import…</p>
+            <div class="progress-track"><div class="progress-fill" id="importProgressFill"></div></div>
+            <p id="importProgressCounts" class="progress-counts"></p>
+            <div class="dialog-actions">
+                <button type="button" class="btn-primary" id="importCloseBtn" style="display:none" onclick="location.reload()">Done</button>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -2,6 +2,7 @@ import Handlebars from "./handlebars.js";
 import { pagesCount } from "./store.js"
 
 Handlebars.registerHelper('or', (...args) => args.slice(0, -1).some(Boolean));
+Handlebars.registerHelper('join', (arr, sep) => Array.isArray(arr) ? arr.join(typeof sep === 'string' ? sep : ', ') : '');
 
 export const templateCache = {};
 export const rawTemplateCache = {};

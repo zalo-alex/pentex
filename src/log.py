@@ -12,12 +12,17 @@ def add_log(action, detail=None, username=None):
     except Exception:
         pass
 
+    try:
+        ip = request.remote_addr
+    except Exception:
+        ip = None
+
     entry = Log(
         user_id=uid,
         username=uname,
         action=action,
         detail=detail,
-        ip=request.remote_addr,
+        ip=ip,
     )
     try:
         db.session.add(entry)

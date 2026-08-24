@@ -25,6 +25,7 @@
                     <th>Name</th>
                     <th>Category</th>
                     <th>Client</th>
+                    <th>Language</th>
                     <th>Created</th>
                     <th class="actions-col"></th>
                 </tr>
@@ -40,6 +41,7 @@
                     </td>
                     <td>{{ report.category.name if report.category else '—' }}</td>
                     <td>{{ report.client or '—' }}</td>
+                    <td>{{ report.language or 'FR' }}</td>
                     <td>{{ report.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td class="actions-col">
                         <button class="btn-delete" onclick="deleteReport('{{ report.public_id }}', this)" title="Delete">×</button>
@@ -64,6 +66,10 @@
             {% for cat in categories %}
             <option value="{{ cat.public_id }}">{{ cat.name }}</option>
             {% endfor %}
+        </select>
+        <select id="newReportLanguage">
+            <option value="FR" selected>French</option>
+            <option value="EN">English</option>
         </select>
         <div class="dialog-actions">
             <button class="btn-secondary" onclick="closeNewReportDialog()">Cancel</button>

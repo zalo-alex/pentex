@@ -1,28 +1,28 @@
 <page class="executive-summary-page">
-    <h1>Executive Summary</h1>
+    <h1>Résumé exécutif</h1>
 
-    <h2>Summary</h2>
-    <p>A {{testType}} security assessment of <b>{{targetName}}</b> was carried out against its {{env}} environment.</p>
+    <h2>Synthèse</h2>
+    <p>Une évaluation de sécurité de type {{testType}} de <b>{{targetName}}</b> a été réalisée sur son environnement {{env}}.</p>
 
     {{#if securityLevel}}
-    <p>The overall security level of <b>{{targetName}}</b> is assessed as <span class="sev-badge sev-{{securityLevel}}">{{securityLevel}}</span>.</p>
+    <p>Le niveau de sécurité global de <b>{{targetName}}</b> est évalué comme <span class="sev-badge sev-{{securityLevel}}">{{securityLevel}}</span>.</p>
     {{/if}}
 
     {{#if risks}}
-    <h2>Risks</h2>
+    <h2>Risques</h2>
     {{{risks}}}
     {{/if}}
 
     {{#if actionPlan}}
-    <h2>Action Plan</h2>
+    <h2>Plan d'action</h2>
     {{{actionPlan}}}
     {{/if}}
 
-    <h2>Findings Overview</h2>
+    <h2>Synthèse des vulnérabilités</h2>
     <table id="vulnerabilities-abstract">
         <tr>
-            <th>Finding</th>
-            <th>Severity</th>
+            <th>Vulnérabilité</th>
+            <th>Sévérité</th>
         </tr>
         {{#findings}}
         <tr>

@@ -1,26 +1,26 @@
 <page class="scope-and-conditions-page">
-    <h1>Scope and Conditions</h1>
+    <h1>Périmètre et conditions</h1>
 
-    <h2>Timeline</h2>
+    <h2>Calendrier</h2>
     <table>
         <tr>
-            <th>Kick-off Meeting</th>
+            <th>Réunion de lancement</th>
             <td>{{keekOffMeetingDate}}</td>
         </tr>
         <tr>
-            <th>Start of Assessment</th>
+            <th>Début de l'évaluation</th>
             <td>{{startOfTestsDate}}</td>
         </tr>
         <tr>
-            <th>End of Assessment</th>
+            <th>Fin de l'évaluation</th>
             <td>{{endOfTestsDate}}</td>
         </tr>
     </table>
 
-    <h2>Auditors</h2>
+    <h2>Auditeurs</h2>
     <table>
         <tr>
-            <th>Full Name</th>
+            <th>Nom complet</th>
             <th>Email</th>
         </tr>
         {{#auditors}}
@@ -31,10 +31,10 @@
         {{/auditors}}
     </table>
 
-    <h2>Scope</h2>
+    <h2>Périmètre</h2>
     <table>
         <tr>
-            <th>Target Asset / Perimeter</th>
+            <th>Actif cible / Périmètre</th>
         </tr>
         {{#scopes}}
         <tr>
@@ -43,12 +43,12 @@
         {{/scopes}}
     </table>
 
-    <h2>Provisioned Access</h2>
+    <h2>Accès fournis</h2>
     <table>
         <tr>
-            <th>Identifier</th>
-            <th>Role/Type</th>
-            <th>Resource</th>
+            <th>Identifiant</th>
+            <th>Rôle/Type</th>
+            <th>Ressource</th>
         </tr>
         {{#testAccess}}
         <tr>
@@ -60,21 +60,51 @@
     </table>
 
     {{#if strength}}
-    <h2>Strengths</h2>
+    <h2>Points forts</h2>
     <p>{{strength}}</p>
     {{/if}}
 
-    {{#if (or discoveryApplication discoveryInfra)}}
-    <h2>Discovery Findings</h2>
+    {{#if (or discoveryEntryPoints discoveryTechnologies discoveryServerPlatform discoveryClientTech discoveryAuthMechanisms discoverySessionManagement discoveryMappedFeatures discoveryIntegrations discoveryApiEndpoints discoveryStaticDynamicContent discoveryAccessControlBehavior discoveryParameters discoverySubdomains discoverySecurityHeaders discoveryApplication)}}
+    <h2>Constats de découverte applicative</h2>
+    {{#if discoveryEntryPoints}}<p><b>URL / Points d'entrée :</b> {{join discoveryEntryPoints ", "}}</p>{{/if}}
+    {{#if discoveryTechnologies}}<p><b>Technologies identifiées :</b> {{join discoveryTechnologies ", "}}</p>{{/if}}
+    {{#if discoveryServerPlatform}}<p><b>Langage / plateforme serveur :</b> {{discoveryServerPlatform}}</p>{{/if}}
+    {{#if discoveryClientTech}}<p><b>Technologies côté client :</b> {{join discoveryClientTech ", "}}</p>{{/if}}
+    {{#if discoveryAuthMechanisms}}<p><b>Mécanismes d'authentification :</b> {{join discoveryAuthMechanisms ", "}}</p>{{/if}}
+    {{#if discoverySessionManagement}}<p><b>Gestion de session :</b> {{join discoverySessionManagement ", "}}</p>{{/if}}
+    {{#if discoveryMappedFeatures}}<p><b>Fonctionnalités mappées :</b> {{join discoveryMappedFeatures ", "}}</p>{{/if}}
+    {{#if discoveryIntegrations}}<p><b>Intégrations externes :</b> {{join discoveryIntegrations ", "}}</p>{{/if}}
+    {{#if discoveryApiEndpoints}}<p><b>Endpoints d'API découverts :</b> {{join discoveryApiEndpoints ", "}}</p>{{/if}}
+    {{#if discoveryStaticDynamicContent}}<p><b>Contenu statique/dynamique observé :</b> {{discoveryStaticDynamicContent}}</p>{{/if}}
+    {{#if discoveryAccessControlBehavior}}<p><b>Comportement du contrôle d'accès :</b> {{discoveryAccessControlBehavior}}</p>{{/if}}
+    {{#if discoveryParameters}}<p><b>Paramètres identifiés :</b> {{join discoveryParameters ", "}}</p>{{/if}}
+    {{#if discoverySubdomains}}<p><b>Sous-domaines liés :</b> {{join discoverySubdomains ", "}}</p>{{/if}}
+    {{#if discoverySecurityHeaders}}<p><b>En-têtes de sécurité observés :</b> {{join discoverySecurityHeaders ", "}}</p>{{/if}}
     {{#if discoveryApplication}}<p>{{discoveryApplication}}</p>{{/if}}
+    {{/if}}
+
+    {{#if (or discoveryIpRanges discoveryDnsEntries discoveryOpenPorts discoveryServiceBanners discoveryHostingProvider discoveryWafLb discoveryTlsCertDetails discoveryHttpFingerprint discoveryInternalServices discoveryRemoteAccess discoveryStagingEnvs discoveryDebugServices discoveryInfra)}}
+    <h2>Constats de découverte infrastructure</h2>
+    {{#if discoveryIpRanges}}<p><b>Adresses IP / plages CIDR :</b> {{join discoveryIpRanges ", "}}</p>{{/if}}
+    {{#if discoveryDnsEntries}}<p><b>Sous-domaines et entrées DNS :</b> {{join discoveryDnsEntries ", "}}</p>{{/if}}
+    {{#if discoveryOpenPorts}}<p><b>Ports ouverts et services exposés :</b> {{join discoveryOpenPorts ", "}}</p>{{/if}}
+    {{#if discoveryServiceBanners}}<p><b>Bannières et versions de services :</b> {{join discoveryServiceBanners ", "}}</p>{{/if}}
+    {{#if discoveryHostingProvider}}<p><b>Hébergeur / environnement cloud :</b> {{discoveryHostingProvider}}</p>{{/if}}
+    {{#if discoveryWafLb}}<p><b>WAF / load balancer / reverse proxy :</b> {{join discoveryWafLb ", "}}</p>{{/if}}
+    {{#if discoveryTlsCertDetails}}<p><b>Certificat SSL/TLS :</b> {{discoveryTlsCertDetails}}</p>{{/if}}
+    {{#if discoveryHttpFingerprint}}<p><b>Fingerprinting en-têtes HTTP :</b> {{join discoveryHttpFingerprint ", "}}</p>{{/if}}
+    {{#if discoveryInternalServices}}<p><b>Services internes / email exposés :</b> {{join discoveryInternalServices ", "}}</p>{{/if}}
+    {{#if discoveryRemoteAccess}}<p><b>Portails VPN / accès distant :</b> {{join discoveryRemoteAccess ", "}}</p>{{/if}}
+    {{#if discoveryStagingEnvs}}<p><b>Environnements de test/staging/sauvegarde :</b> {{join discoveryStagingEnvs ", "}}</p>{{/if}}
+    {{#if discoveryDebugServices}}<p><b>Services de debug/monitoring/logs :</b> {{join discoveryDebugServices ", "}}</p>{{/if}}
     {{#if discoveryInfra}}<p>{{discoveryInfra}}</p>{{/if}}
     {{/if}}
 
     {{#if (or account injection upload traces)}}
-    <h2>Testing Artifacts</h2>
-    {{#if account}}<p><b>Accounts created:</b> {{account}}</p>{{/if}}
-    {{#if injection}}<p><b>Injections:</b> {{injection}}</p>{{/if}}
-    {{#if upload}}<p><b>Files uploaded:</b> {{upload}}</p>{{/if}}
-    {{#if traces}}<p><b>Other traces:</b> {{traces}}</p>{{/if}}
+    <h2>Éléments de test</h2>
+    {{#if account}}<p><b>Comptes créés :</b> {{account}}</p>{{/if}}
+    {{#if injection}}<p><b>Injections :</b> {{injection}}</p>{{/if}}
+    {{#if upload}}<p><b>Fichiers déposés :</b> {{upload}}</p>{{/if}}
+    {{#if traces}}<p><b>Autres traces :</b> {{traces}}</p>{{/if}}
     {{/if}}
 </page>

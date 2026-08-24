@@ -107,3 +107,18 @@ th { font-weight: 700; }
 .sev-badge.sev-medium   { background: var(--sev-medium); }
 .sev-badge.sev-low      { background: var(--sev-low); }
 .sev-badge.sev-info     { background: var(--sev-info); }
+
+.wstg-mark {
+    text-align: center;
+    font-weight: 700;
+}
+
+.wstg-vuln-cell a {
+    color: var(--sev-high);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.wstg-vuln-cell a:hover {
+    text-decoration: underline;
+}

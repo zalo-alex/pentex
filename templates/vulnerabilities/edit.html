@@ -6,6 +6,7 @@
 {% block head %}
 <link rel="stylesheet" href="/static/css/cvss_shared.css">
 <link rel="stylesheet" href="/static/css/vuln_form.css">
+<link rel="stylesheet" href="/static/css/dialog.css">
 <script src="/static/tinymce/tinymce.min.js"></script>
 {% endblock %}
 
@@ -13,7 +14,19 @@
 <div class="form-page">
     <div class="form-header">
         <h1>Edit Vulnerability</h1>
-        <a href="{{ url_for('vulnerabilities.index') }}" class="btn-secondary">Cancel</a>
+        <div style="display:flex; gap:8px; align-items:center">
+            {% if translation %}
+            <a href="{{ url_for('vulnerabilities.edit', id=translation.public_id) }}" class="btn-secondary">
+                View {{ translation.language }} version
+            </a>
+            {% else %}
+            <button type="button" class="btn-secondary" id="translateBtn" data-vuln-id="{{ vuln.public_id }}"
+                    data-target-lang="{{ 'FR' if (vuln.language or 'EN') == 'EN' else 'EN' }}" onclick="openTranslateDialog(this)">
+                Translate to {{ 'FR' if (vuln.language or 'EN') == 'EN' else 'EN' }}
+            </button>
+            {% endif %}
+            <a href="{{ url_for('vulnerabilities.index') }}" class="btn-secondary">Cancel</a>
+        </div>
     </div>
 
     <form method="post">
@@ -39,6 +52,13 @@
                         {% endfor %}
                     </select>
                 </label>
+                <label class="label-input">
+                    Language
+                    <select name="language">
+                        <option value="FR" {% if (vuln.language or 'FR') == 'FR' %}selected{% endif %}>French</option>
+                        <option value="EN" {% if vuln.language == 'EN' %}selected{% endif %}>English</option>
+                    </select>
+                </label>
             </div>
 
             <h2 class="form-section-title">Description</h2>
@@ -49,6 +69,17 @@
                 </div>
                 <div class="editor-content">
                     <textarea id="description" name="description">{{ vuln.description or '' }}</textarea>
+                </div>
+            </div>
+
+            <h2 class="form-section-title">Observation</h2>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>Observation</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="observation" name="observation">{{ vuln.observation or '' }}</textarea>
                 </div>
             </div>
 
@@ -88,6 +119,17 @@
                 </div>
             </div>
 
+            <h2 class="form-section-title">References</h2>
+            <div class="editor-section">
+                <div class="editor-header" onclick="toggleEditor(this)">
+                    <span>References</span>
+                    <span class="editor-toggle">▼</span>
+                </div>
+                <div class="editor-content">
+                    <textarea id="references" name="references">{{ vuln.references or '' }}</textarea>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <a href="{{ url_for('vulnerabilities.index') }}" class="btn-secondary">Cancel</a>
                 <button type="submit">Save Changes</button>
@@ -95,6 +137,17 @@
 
         </div>
     </form>
+</div>
+
+<div class="dialog-container" id="translateDialog">
+    <div class="dialog">
+        <h3 id="translateDialogTitle">Translating&hellip;</h3>
+        <p id="translateStatusText">Contacting translation service&hellip;</p>
+        <div class="progress-track"><div class="progress-fill progress-fill-indeterminate" id="translateProgressFill"></div></div>
+        <div class="dialog-actions">
+            <button type="button" class="btn-secondary" id="translateCloseBtn" style="display:none" onclick="closeTranslateDialog()">Close</button>
+        </div>
+    </div>
 </div>
 
 <script src="/static/js/toggle_editor.js"></script>

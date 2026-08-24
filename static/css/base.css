@@ -2,6 +2,15 @@
     box-sizing: border-box;
 }
 
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+button, input, select, textarea, optgroup {
+    font-family: inherit;
+    font-size: inherit;
+}
+
 main {
     padding-top: 56px;
 }

@@ -27,6 +27,10 @@ def _version_dir(template_public_id, version_number):
     return os.path.join(_root_dir(), template_public_id, 'versions', str(version_number))
 
 
+def _baseline_dir(template_public_id):
+    return os.path.join(_root_dir(), template_public_id, 'baseline')
+
+
 def _read_order(directory):
     path = os.path.join(directory, _ORDER_FILENAME)
     try:
@@ -61,6 +65,10 @@ def write_page_order(template_public_id, filenames):
     with open(tmp_path, 'w', encoding='utf-8') as f:
         json.dump(list(filenames), f)
     os.replace(tmp_path, path)
+
+
+def read_page_order(template_public_id):
+    return _read_order(_current_dir(template_public_id))
 
 
 def _read_file(directory, filename):
@@ -102,6 +110,19 @@ def list_version_pages(template_public_id, version_number):
 
 def read_version_page(template_public_id, version_number, filename):
     return _read_file(_version_dir(template_public_id, version_number), filename)
+
+
+def read_baseline_page(template_public_id, filename):
+    return _read_file(_baseline_dir(template_public_id), filename)
+
+
+def write_baseline_page(template_public_id, filename, content):
+    if not _is_safe_filename(filename):
+        raise ValueError(f'Unsafe filename: {filename!r}')
+    directory = _baseline_dir(template_public_id)
+    os.makedirs(directory, exist_ok=True)
+    with open(os.path.join(directory, filename), 'w', encoding='utf-8') as f:
+        f.write(content or '')
 
 
 def version_pages(template_public_id, version_number):

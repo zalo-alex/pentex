@@ -2,6 +2,8 @@ import { renderPages } from "./src/render.js";
 import { preloadTemplates, getRawTemplate, updateTemplate } from "./src/templates.js";
 import { tinymceConfig } from "./src/constants.js"
 import { downloadSaveFile, importSaveFile, initBinds, pagesCount, saveLocal, zidIndexes, saveToServer, loadFromServer } from "./src/store.js";
+import { initTagFields, initPillGroups, refreshTagFields, refreshPillGroups } from "./src/tag_fields.js";
+import { initWstgUI, refreshWstgUI, refreshWstgFindingOptions } from "./src/wstg.js";
 import { apiGetVulnerabilities, apiCreateVulnerability, apiUpdateVulnerability, apiGetReport } from "./src/api.js";
 import { loadAuditorUsers } from "./src/auditors.js"
 import "./src/export.js"
@@ -14,7 +16,7 @@ window.zidToPage = {}
 const buttons = document.querySelectorAll('.nav .button');
 const pages = document.querySelectorAll('.sidebar .page');
 
-const _pageNames = ['general', 'executive', 'traces', 'discovery', 'observations', 'findings', 'project'];
+const _pageNames = ['general', 'executive', 'traces', 'discovery', 'testoverview', 'observations', 'findings', 'project'];
 
 // Navbar
 buttons.forEach((button, index) => {
@@ -23,6 +25,7 @@ buttons.forEach((button, index) => {
         button.classList.add('active');
         pages.forEach(page => page.style.display = 'none');
         pages[index].style.display = 'block';
+        if (_pageNames[index] === 'testoverview') refreshWstgFindingOptions();
         emitPageChange(_pageNames[index]);
     });
 });
@@ -58,8 +61,8 @@ window.tabToFinding = {}
 
 
 function initTinyMCE(zid, initialContent = {}) {
-    const selectors = [`#desc-${zid}`, `#remed-${zid}`, `#poc-${zid}`]
-    const fields = ['description', 'remediation', 'poc']
+    const selectors = [`#desc-${zid}`, `#obs-${zid}`, `#remed-${zid}`, `#refs-${zid}`, `#poc-${zid}`]
+    const fields = ['description', 'observation', 'remediation', 'references', 'poc']
 
     selectors.forEach((selector, index) => {
         tinymce.init({
@@ -157,7 +160,7 @@ function initTinyMCE(zid, initialContent = {}) {
 }
 
 function destroyTinyMCE(zid) {
-    const selectors = [`desc-${zid}`, `remed-${zid}`, `poc-${zid}`]
+    const selectors = [`desc-${zid}`, `obs-${zid}`, `remed-${zid}`, `refs-${zid}`, `poc-${zid}`]
     selectors.forEach(id => {
         const editor = tinymce.get(id)
         if (editor) editor.remove()
@@ -172,7 +175,9 @@ window.addFinding = (addDefaults = true, initialContent = {}) => {
         window.dataStore.pages.findings.push({
             name: "",
             description: "",
+            observation: "",
             remediation: "",
+            references: "",
             poc: "",
             cvss: 0.0,
             cvssString: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N",
@@ -198,6 +203,7 @@ window.addFinding = (addDefaults = true, initialContent = {}) => {
 
     switchFinding(tabZid)
     renderPages()
+    refreshWstgFindingOptions()
 
     return finding
 }
@@ -225,6 +231,7 @@ window.removeFinding = (zid) => {
         if (lastTabZid) switchFinding(lastTabZid)
     }
     renderPages()
+    refreshWstgFindingOptions()
 }
 
 window.switchFinding = (zid) => {
@@ -316,17 +323,44 @@ function parseCvssVector(vector) {
     return m
 }
 
+function renderVulnPickerItem(vuln) {
+    const item = document.createElement('div')
+    item.className = 'vuln-picker-item'
+    const sev = (vuln.severity || 'NONE').toLowerCase()
+    const badgeClass = sev === 'none' ? 'badge-info' : `badge-${sev}`
+
+    const nameSpan = document.createElement('span')
+    nameSpan.className = 'vuln-picker-name'
+    nameSpan.textContent = vuln.name
+
+    const badge = document.createElement('span')
+    badge.className = `badge ${badgeClass}`
+    badge.textContent = vuln.severity || 'NONE'
+
+    const right = document.createElement('span')
+    right.className = 'vuln-picker-right'
+    right.appendChild(badge)
+
+    item.appendChild(nameSpan)
+    item.appendChild(right)
+    item.onclick = () => { closeAddFindingDialog(); addFindingFromVuln(vuln) }
+
+    return item
+}
+
 window.openAddFindingDialog = async () => {
     const container = document.getElementById('addFindingDialog')
     const list = document.getElementById('addFindingDialogList')
     const searchInput = document.getElementById('addFindingSearch')
-    
+
     if (searchInput) searchInput.value = ''
     list.innerHTML = '<p class="vuln-picker-loading">Loading…</p>'
     container.classList.add('open')
 
+    const reportLanguage = (typeof _reportLanguage !== 'undefined' && _reportLanguage) || 'FR'
+
     try {
-        const vulns = await apiGetVulnerabilities()
+        const vulns = await apiGetVulnerabilities(reportLanguage)
 
         list.innerHTML = ''
 
@@ -337,16 +371,7 @@ window.openAddFindingDialog = async () => {
         list.appendChild(emptyItem)
 
         vulns.forEach(vuln => {
-            const item = document.createElement('div')
-            item.className = 'vuln-picker-item'
-            const sev = (vuln.severity || 'NONE').toLowerCase()
-            const badgeClass = sev === 'none' ? 'badge-info' : `badge-${sev}`
-            item.innerHTML = `
-                <span class="vuln-picker-name">${escapeHtml(vuln.name)}</span>
-                <span class="badge ${badgeClass}">${escapeHtml(vuln.severity || 'NONE')}</span>
-            `
-            item.onclick = () => { closeAddFindingDialog(); addFindingFromVuln(vuln) }
-            list.appendChild(item)
+            list.appendChild(renderVulnPickerItem(vuln))
         })
     } catch (e) {
         list.innerHTML = '<p class="vuln-picker-loading">Failed to load vulnerabilities.</p>'
@@ -376,7 +401,9 @@ window.addFindingFromVuln = (vuln) => {
 
     const finding = addFinding(true, {
         description: vuln.description || '',
+        observation: vuln.observation || '',
         remediation: vuln.remediation || '',
+        references: vuln.references || '',
     })
 
     const zid = finding.getAttribute('zid')
@@ -424,11 +451,14 @@ async function doSaveFindingToVuln(zid, vulnId) {
     const finding = window.dataStore.pages.findings[findingIndex]
 
     const descEditor = tinymce.get(`desc-${zid}`)
+    const obsEditor = tinymce.get(`obs-${zid}`)
     const remedEditor = tinymce.get(`remed-${zid}`)
+    const refsEditor = tinymce.get(`refs-${zid}`)
 
     const payload = {
         name: finding.name || '',
         description: descEditor ? DOMPurify.sanitize(descEditor.getContent()) : (finding.description || ''),
+        observation: obsEditor ? DOMPurify.sanitize(obsEditor.getContent()) : (finding.observation || ''),
         classification: finding.classification || '',
         cvss_vector: finding.cvssString || 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N',
         cvss_score: finding.cvss || 0,
@@ -436,6 +466,7 @@ async function doSaveFindingToVuln(zid, vulnId) {
         remediation_complexity: finding.remediationComplexity || 'Low',
         remediation_priority: finding.remediationPriority || 'Low',
         remediation: remedEditor ? DOMPurify.sanitize(remedEditor.getContent()) : (finding.remediation || ''),
+        references: refsEditor ? DOMPurify.sanitize(refsEditor.getContent()) : (finding.references || ''),
     }
 
     const result = vulnId
@@ -564,7 +595,10 @@ window.addEventListener("load", async () => {
     if (loader) loader.style.display = 'flex'
 
     await preloadTemplates()
+    initWstgUI()
     initBinds()
+    initTagFields()
+    initPillGroups()
     await loadAuditorUsers()
 
     // Attach collab focus/blur listeners to top-level global fields
@@ -583,6 +617,9 @@ window.addEventListener("load", async () => {
         try {
             const report = await apiGetReport(reportId)
             if (report.content) loadFromServer(report.content)
+            refreshTagFields()
+            refreshPillGroups()
+            refreshWstgUI()
         } catch (e) {
             console.error('Failed to load report', e)
         }

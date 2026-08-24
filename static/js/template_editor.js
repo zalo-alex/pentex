@@ -206,12 +206,22 @@ function updatePreview() {
     </body></html>`
 }
 
+function updateSaveButtonState() {
+    const saveBtn = document.getElementById('saveBtn')
+    if (!saveBtn || !currentFilename) return
+    // Don't clobber the transient "Saving…" / "Saved" / "Save failed" states — they clear themselves.
+    if (saveBtn.classList.contains('saving') || saveBtn.classList.contains('saved') || saveBtn.classList.contains('save-error')) return
+    saveBtn.textContent = 'Save'
+    saveBtn.disabled = !isPageDirty(currentFilename)
+}
+
 function onEditorContentChanged() {
     pages[currentFilename].content = monacoEditor.getValue()
     pages[currentFilename].result = analyzeTemplate(currentFilename, pages[currentFilename].content)
     updateErrorBadge(currentFilename)
     updateMarkers(currentFilename)
     renderLists()
+    updateSaveButtonState()
 
     clearTimeout(previewTimer)
     previewTimer = setTimeout(updatePreview, 300)
@@ -224,7 +234,8 @@ function selectPage(filename) {
     currentFilename = filename
     document.getElementById('currentPageName').textContent = filename
     const saveBtn = document.getElementById('saveBtn')
-    if (saveBtn) saveBtn.disabled = false
+    if (saveBtn) saveBtn.classList.remove('saving', 'saved', 'save-error')
+    updateSaveButtonState()
     renderLists()
     updateErrorBadge(filename)
 
@@ -249,21 +260,65 @@ function selectPage(filename) {
 
 async function savePage() {
     if (!currentFilename || !monacoEditor) return
+    const savingFilename = currentFilename
     const content = monacoEditor.getValue()
-    const res = await fetch(`/api/templates/${_templateId}/pages/${encodeURIComponent(currentFilename)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
-        body: JSON.stringify({ content })
-    })
-    if (!res.ok) {
-        alert('Failed to save page.')
+    const saveBtn = document.getElementById('saveBtn')
+
+    if (saveBtn) {
+        saveBtn.classList.remove('saved', 'save-error')
+        saveBtn.classList.add('saving')
+        saveBtn.disabled = true
+        saveBtn.textContent = 'Saving…'
+    }
+
+    let res, networkError
+    try {
+        res = await fetch(`/api/templates/${_templateId}/pages/${encodeURIComponent(currentFilename)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
+            body: JSON.stringify({ content })
+        })
+    } catch (e) {
+        networkError = e
+    }
+
+    // The user may have switched pages while the request was in flight — only touch the
+    // button if we're still looking at the page that was actually saved.
+    const stillOnSamePage = currentFilename === savingFilename
+
+    if (networkError || !res.ok) {
+        if (saveBtn && stillOnSamePage) {
+            saveBtn.classList.remove('saving')
+            saveBtn.classList.add('save-error')
+            saveBtn.disabled = false
+            saveBtn.textContent = 'Save failed'
+            setTimeout(() => {
+                saveBtn.classList.remove('save-error')
+                updateSaveButtonState()
+            }, 2200)
+        }
         return
     }
+
     const data = await res.json()
-    pages[currentFilename] = { content: data.content, result: data.result, savedContent: data.content }
-    updateErrorBadge(currentFilename)
-    updateMarkers(currentFilename)
+    pages[savingFilename] = { content: data.content, result: data.result, savedContent: data.content }
+
+    if (stillOnSamePage) {
+        updateErrorBadge(savingFilename)
+        updateMarkers(savingFilename)
+    }
     renderLists()
+
+    if (saveBtn && stillOnSamePage) {
+        saveBtn.classList.remove('saving')
+        saveBtn.classList.add('saved')
+        saveBtn.disabled = true
+        saveBtn.textContent = 'Saved ✓'
+        setTimeout(() => {
+            saveBtn.classList.remove('saved')
+            updateSaveButtonState()
+        }, 1400)
+    }
 }
 
 document.getElementById('saveBtn')?.addEventListener('click', savePage)
@@ -308,7 +363,10 @@ function toggleVersionsPanel(forceOpen) {
     const panel = document.getElementById('versionsPanel')
     versionsPanelOpen = forceOpen !== undefined ? forceOpen : !versionsPanelOpen
     panel.hidden = !versionsPanelOpen
-    if (versionsPanelOpen) fetchVersions()
+    if (versionsPanelOpen) {
+        toggleRulesPanel(false)
+        fetchVersions()
+    }
 }
 
 async function createVersion() {
@@ -330,6 +388,249 @@ async function createVersion() {
 document.getElementById('createVersionBtn')?.addEventListener('click', createVersion)
 document.getElementById('versionsBtn')?.addEventListener('click', () => toggleVersionsPanel())
 document.getElementById('versionsPanelClose')?.addEventListener('click', () => toggleVersionsPanel(false))
+
+let rulesPanelOpen = false
+
+async function fetchRules() {
+    const res = await fetch('/api/translation-rules')
+    const rules = res.ok ? await res.json() : []
+    renderRuleList(rules)
+}
+
+function renderRuleList(rules) {
+    const list = document.getElementById('ruleList')
+    list.innerHTML = ''
+    if (rules.length === 0) {
+        list.innerHTML = '<li class="rule-empty">No translation rules yet.</li>'
+        return
+    }
+    rules.forEach((r) => {
+        const li = document.createElement('li')
+        li.className = 'rule-item'
+        const date = r.created_at ? new Date(r.created_at).toLocaleString() : ''
+        li.innerHTML = `
+            <div>
+                <div class="rule-item-text"></div>
+                <div class="rule-item-meta">${r.source === 'auto' ? 'Auto-suggested' : 'Manual'} · ${r.created_by_username} · ${date}</div>
+            </div>
+            <button class="btn-delete" title="Delete">×</button>
+        `
+        li.querySelector('.rule-item-text').textContent = r.text
+        li.querySelector('.btn-delete').addEventListener('click', () => deleteRule(r.id))
+        list.appendChild(li)
+    })
+}
+
+async function addRule() {
+    const textarea = document.getElementById('newRuleText')
+    const text = textarea.value.trim()
+    if (!text) return
+    const res = await fetch('/api/translation-rules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
+        body: JSON.stringify({ text })
+    })
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || 'Failed to add rule.')
+        return
+    }
+    textarea.value = ''
+    fetchRules()
+}
+
+async function deleteRule(ruleId) {
+    if (!confirm('Delete this translation rule?')) return
+    const res = await fetch(`/api/translation-rules/${ruleId}`, {
+        method: 'DELETE', headers: { 'X-CSRFToken': _csrfToken() }
+    })
+    if (res.ok) fetchRules()
+}
+
+function toggleRulesPanel(forceOpen) {
+    const panel = document.getElementById('rulesPanel')
+    if (!panel) return
+    rulesPanelOpen = forceOpen !== undefined ? forceOpen : !rulesPanelOpen
+    panel.hidden = !rulesPanelOpen
+    if (rulesPanelOpen) {
+        toggleVersionsPanel(false)
+        fetchRules()
+    }
+}
+
+document.getElementById('addRuleBtn')?.addEventListener('click', addRule)
+document.getElementById('rulesBtn')?.addEventListener('click', () => toggleRulesPanel())
+document.getElementById('rulesPanelClose')?.addEventListener('click', () => toggleRulesPanel(false))
+
+function setTemplateTranslateProgress(pct, text, counts) {
+    document.getElementById('templateTranslateProgressFill').style.width = pct + '%'
+    document.getElementById('templateTranslateStatusText').textContent = text
+    if (counts !== undefined) document.getElementById('templateTranslateCounts').textContent = counts
+}
+
+window.closeTemplateTranslateDialog = () => {
+    document.getElementById('templateTranslateDialog').classList.remove('open')
+}
+
+async function pollTemplateTranslateStatus(jobId) {
+    let res
+    try {
+        res = await fetch(`/templates/${_templateId}/translate/${jobId}/status`)
+    } catch {
+        setTimeout(() => pollTemplateTranslateStatus(jobId), 1000)
+        return
+    }
+    if (!res.ok) return
+
+    const job = await res.json()
+    const pct = job.total ? Math.round((job.processed / job.total) * 100) : 0
+    setTemplateTranslateProgress(pct, job.message || `Processed ${job.processed} / ${job.total}…`,
+        job.total ? `${job.processed} / ${job.total} pages translated` : '')
+
+    if (job.status === 'running') {
+        setTimeout(() => pollTemplateTranslateStatus(jobId), 700)
+    } else if (job.status === 'done') {
+        setTemplateTranslateProgress(100, job.message, '')
+        window.location.href = job.redirect
+    } else {
+        document.getElementById('templateTranslateCloseBtn').style.display = 'inline-block'
+    }
+}
+
+function openTranslateReviewDialog(changes, pagesWithoutBaseline) {
+    return new Promise((resolve) => {
+        const list = document.getElementById('translateChangesList')
+        const intro = document.getElementById('translateChangesIntro')
+        const warning = document.getElementById('translateChangesWarning')
+
+        intro.style.display = changes.length ? '' : 'none'
+        list.style.display = changes.length ? '' : 'none'
+        if (pagesWithoutBaseline && pagesWithoutBaseline.length) {
+            document.getElementById('translateChangesWarningPages').textContent = pagesWithoutBaseline.join(', ')
+            warning.style.display = ''
+        } else {
+            warning.style.display = 'none'
+        }
+
+        list.innerHTML = ''
+        changes.forEach((c, idx) => {
+            const li = document.createElement('li')
+            li.className = 'rule-checklist-item'
+
+            const checkbox = document.createElement('input')
+            checkbox.type = 'checkbox'
+            checkbox.checked = true
+            checkbox.dataset.idx = String(idx)
+
+            const body = document.createElement('div')
+            const filenameEl = document.createElement('span')
+            filenameEl.className = 'rule-checklist-filename'
+            filenameEl.textContent = c.filename
+            const diffEl = document.createElement('div')
+            diffEl.className = 'rule-checklist-diff'
+            if (c.old) {
+                const del = document.createElement('del')
+                del.textContent = c.old
+                diffEl.appendChild(del)
+                diffEl.appendChild(document.createTextNode(' '))
+            }
+            if (c.new) {
+                const ins = document.createElement('ins')
+                ins.textContent = c.new
+                diffEl.appendChild(ins)
+            }
+            body.appendChild(filenameEl)
+            body.appendChild(diffEl)
+
+            li.appendChild(checkbox)
+            li.appendChild(body)
+            list.appendChild(li)
+        })
+
+        const dialog = document.getElementById('translateChangesDialog')
+        const continueBtn = document.getElementById('translateChangesContinueBtn')
+        const cancelBtn = document.getElementById('translateChangesCancelBtn')
+
+        const cleanup = () => {
+            dialog.classList.remove('open')
+            continueBtn.removeEventListener('click', onContinue)
+            cancelBtn.removeEventListener('click', onCancel)
+        }
+        const onContinue = () => {
+            const checked = [...list.querySelectorAll('input[type="checkbox"]:checked')]
+                .map((cb) => changes[Number(cb.dataset.idx)])
+            cleanup()
+            resolve(checked)
+        }
+        const onCancel = () => {
+            cleanup()
+            resolve(null)
+        }
+        continueBtn.addEventListener('click', onContinue)
+        cancelBtn.addEventListener('click', onCancel)
+
+        dialog.classList.add('open')
+    })
+}
+
+window.openTemplateTranslateDialog = async (btn) => {
+    const targetLang = btn.dataset.targetLang
+    const force = btn.dataset.force === 'true'
+    let approvedChanges = []
+
+    if (force) {
+        const targetName = btn.dataset.targetName || `the ${targetLang} version`
+        const plainConfirm = () => confirm(
+            `Regenerate "${targetName}" from this template's current content?\n\n` +
+            `Its existing content will be saved as a version first, so you can restore it from the Versions panel if needed.`
+        )
+
+        let preview = null
+        try {
+            const previewRes = await fetch(`/templates/${_templateId}/translate/preview-changes`)
+            if (previewRes.ok) preview = await previewRes.json()
+        } catch (e) {
+            // Preview failing shouldn't block re-translation itself — fall through to the plain confirm below.
+        }
+
+        const changes = (preview && preview.changes) || []
+        const pagesWithoutBaseline = (preview && preview.pages_without_baseline) || []
+
+        if (changes.length || pagesWithoutBaseline.length) {
+            const approved = await openTranslateReviewDialog(changes, pagesWithoutBaseline)
+            if (approved === null) return  // user cancelled the review step
+            approvedChanges = approved
+        } else if (!plainConfirm()) {
+            return
+        }
+    }
+
+    document.getElementById('templateTranslateDialogTitle').textContent = force
+        ? `Re-translating to ${targetLang}…` : `Translating to ${targetLang}…`
+    document.getElementById('templateTranslateCloseBtn').style.display = 'none'
+    setTemplateTranslateProgress(0, 'Starting translation…', '')
+    document.getElementById('templateTranslateDialog').classList.add('open')
+
+    try {
+        const res = await fetch(`/templates/${_templateId}/translate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _csrfToken() },
+            body: JSON.stringify({ force, approved_changes: approvedChanges })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+
+        if (data.done) {
+            setTemplateTranslateProgress(100, 'Already translated — opening it…', '')
+            window.location.href = data.redirect
+            return
+        }
+        pollTemplateTranslateStatus(data.job_id)
+    } catch (err) {
+        setTemplateTranslateProgress(0, 'Translation failed: ' + err.message, '')
+        document.getElementById('templateTranslateCloseBtn').style.display = 'inline-block'
+    }
+}
 
 window.addEventListener('beforeunload', (e) => {
     if (!hasUnsavedChanges()) return

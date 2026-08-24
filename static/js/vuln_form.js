@@ -2,7 +2,7 @@ import { updateCvssDisplay } from './cvss.js'
 import { tinymceConfig } from './src/constants.js'
 
 // TinyMCE for rich text fields
-for (const field of ['description', 'remediation']) {
+for (const field of ['description', 'observation', 'remediation', 'references']) {
     tinymce.init({
         ...tinymceConfig,
         selector: `#${field}`,
@@ -30,3 +30,36 @@ document.addEventListener('click', (e) => {
 document.querySelector('form').addEventListener('submit', () => {
     tinymce.triggerSave()
 })
+
+// Translate dialog
+window.openTranslateDialog = async (btn) => {
+    const vulnId = btn.dataset.vulnId
+    const targetLang = btn.dataset.targetLang
+
+    document.getElementById('translateDialogTitle').textContent = `Translating to ${targetLang}…`
+    document.getElementById('translateStatusText').textContent = 'Contacting translation service…'
+    document.getElementById('translateProgressFill').classList.add('progress-fill-indeterminate')
+    document.getElementById('translateCloseBtn').style.display = 'none'
+    document.getElementById('translateDialog').classList.add('open')
+
+    try {
+        const res = await fetch(`/api/vulnerabilities/${vulnId}/translate`, {
+            method: 'POST', headers: { 'X-CSRFToken': csrfToken() }
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+
+        document.getElementById('translateProgressFill').classList.remove('progress-fill-indeterminate')
+        document.getElementById('translateProgressFill').style.width = '100%'
+        document.getElementById('translateStatusText').textContent = 'Done — opening translation…'
+        window.location.href = `/vulnerabilities/${data.id}/edit`
+    } catch (err) {
+        document.getElementById('translateProgressFill').classList.remove('progress-fill-indeterminate')
+        document.getElementById('translateStatusText').textContent = 'Translation failed: ' + err.message
+        document.getElementById('translateCloseBtn').style.display = 'inline-block'
+    }
+}
+
+window.closeTranslateDialog = () => {
+    document.getElementById('translateDialog').classList.remove('open')
+}

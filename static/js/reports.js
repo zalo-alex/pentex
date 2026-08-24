@@ -21,15 +21,17 @@ async function createReport() {
     const name = document.getElementById('newReportName').value.trim()
     if (!name) return
     const category_id = document.getElementById('newReportCategory').value || null
+    const language = document.getElementById('newReportLanguage').value || 'FR'
 
     const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
-        body: JSON.stringify({ name, category_id })
+        body: JSON.stringify({ name, category_id, language })
     })
 
     if (!res.ok) return
     const data = await res.json()
+    if (data.warning) alert(data.warning)
     window.location.href = '/reports/' + data.id
 }
 

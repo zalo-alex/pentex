@@ -3,7 +3,7 @@
 import { zidIndexes } from './src/store.js'
 import { renderPages } from './src/render.js'
 
-const PAGE_NAMES = ['general', 'executive', 'traces', 'discovery', 'observations', 'findings', 'project']
+const PAGE_NAMES = ['general', 'executive', 'traces', 'discovery', 'testoverview', 'observations', 'findings', 'project']
 const _TINYMCE_PREFIX = { description: 'desc', remediation: 'remed', poc: 'poc' }
 
 let _socket = null
@@ -264,7 +264,16 @@ function _applyCvssChange(fieldId, value) {
 }
 
 function _applyTinyMCEChange(fieldId, value) {
-    // fieldId: "finding.{idx}.{field}"
+    // fieldId: "finding.{idx}.{field}" or "wstgProof.{categoryId}"
+    if (fieldId.startsWith('wstgProof.')) {
+        const catId = fieldId.slice('wstgProof.'.length)
+        const ed = typeof tinymce !== 'undefined' && tinymce.get(`wstg-proof-${catId}`)
+        if (ed) ed.setContent(value)
+        if (!window.dataStore.global.wstgProof) window.dataStore.global.wstgProof = {}
+        window.dataStore.global.wstgProof[catId] = value
+        return
+    }
+
     const parts = fieldId.split('.')
     const idx = parseInt(parts[1])
     const field = parts.slice(2).join('.')
