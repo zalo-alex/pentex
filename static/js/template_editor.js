@@ -245,7 +245,7 @@ function selectPage(filename) {
                 value: pages[filename].content,
                 language: languageForFilename(filename),
                 theme: 'vs-dark',
-                readOnly: !_isAdmin,
+                readOnly: false,
                 automaticLayout: true
             })
             monacoEditor.onDidChangeModelContent(onEditorContentChanged)

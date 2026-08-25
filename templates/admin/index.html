@@ -316,7 +316,11 @@
 <div class="dialog-container" id="newTemplateDialog" onclick="if(event.target===this)closeNewTemplateDialog()">
     <div class="dialog">
         <h3>Create Template</h3>
-        <form method="post" action="{{ url_for('admin_bp.create_template') }}">
+        <div class="tab-toggle">
+            <button type="button" class="tab-toggle-btn active" id="newTemplateModeCloneBtn" onclick="setNewTemplateMode('clone')">Clone existing</button>
+            <button type="button" class="tab-toggle-btn" id="newTemplateModeZipBtn" onclick="setNewTemplateMode('zip')">Import zip</button>
+        </div>
+        <form method="post" action="{{ url_for('admin_bp.create_template') }}" id="cloneTemplateForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="text" name="name" id="newTemplateName" placeholder="Template name" autocomplete="off" required>
             <select name="source_template_id" required>
@@ -327,6 +331,16 @@
             <div class="dialog-actions">
                 <button type="button" class="btn-secondary" onclick="closeNewTemplateDialog()">Cancel</button>
                 <button type="submit" class="btn-primary">Create</button>
+            </div>
+        </form>
+        <form method="post" action="{{ url_for('admin_bp.create_template_from_zip') }}" enctype="multipart/form-data" id="zipTemplateForm" hidden>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="name" id="newTemplateZipName" placeholder="Template name" autocomplete="off" required>
+            <input type="file" name="file" accept=".zip" required>
+            <p class="dialog-hint">Zip should contain .hbs pages and styles.css at the top level (or inside a single wrapping folder).</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="closeNewTemplateDialog()">Cancel</button>
+                <button type="submit" class="btn-primary">Import</button>
             </div>
         </form>
     </div>

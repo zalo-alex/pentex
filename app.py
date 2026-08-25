@@ -27,6 +27,7 @@ app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken']
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 app.config['ASSET_MAX_UPLOAD_SIZE'] = 20 * 1024 * 1024
+app.config['TEMPLATE_ZIP_MAX_UPLOAD_SIZE'] = 20 * 1024 * 1024
 
 csrf = CSRFProtect(app)
 

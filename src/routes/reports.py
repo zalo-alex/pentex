@@ -69,7 +69,9 @@ def _default_report_content(user, template):
             ],
             "scopes": [],
             "testAccess": [],
-            "diffusionTable": [],
+            "diffusionTable": [
+                {"company": "", "name": author, "role": "Auditor", "email": user.email or ""}
+            ],
             "versionHistory": [
                 {
                     "version": "1.0",

@@ -68,27 +68,28 @@
                 {% endif %}
             </div>
 
-            {% if is_admin %}
             <span class="template-toolbar-divider"></span>
 
             <div class="template-toolbar-group">
+                {% if is_admin %}
                 <button class="editor-icon-btn editor-icon-btn-secondary" id="createVersionBtn" type="button" title="Create Version">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
                 </button>
+                {% endif %}
                 <button class="editor-icon-btn editor-icon-btn-secondary" id="versionsBtn" type="button" title="Versions">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
                 </button>
+                {% if is_admin %}
+                <button class="editor-icon-btn editor-icon-btn-secondary" id="importZipBtn" type="button" title="Replace from zip"
+                        onclick="document.getElementById('importZipDialog').classList.add('open')">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+                </button>
+                {% endif %}
             </div>
 
             <span class="template-toolbar-divider"></span>
 
             <button class="editor-save-btn" id="saveBtn" type="button" disabled>Save</button>
-            {% else %}
-            <span class="template-toolbar-divider"></span>
-            <button class="editor-icon-btn editor-icon-btn-secondary" id="versionsBtn" type="button" title="Versions">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-            </button>
-            {% endif %}
         </div>
         <div id="monacoContainer" class="monaco-container"></div>
     </div>
@@ -119,6 +120,25 @@
     </div>
     <ul id="ruleList"></ul>
 </div>
+
+{% if is_admin %}
+<div class="dialog-container" id="importZipDialog" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="dialog">
+        <h3>Replace from zip</h3>
+        <form method="post" action="{{ url_for('templates_bp.import_template_zip', template_id=template.public_id) }}"
+              enctype="multipart/form-data"
+              onsubmit="return confirm('Replace all pages in \'{{ template.name }}\' with the contents of this zip? The current pages will be saved as a new version first.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="file" accept=".zip" required>
+            <p class="dialog-hint">Zip should contain .hbs pages and styles.css at the top level (or inside a single wrapping folder). This replaces every current page — the existing content is saved as a new version first.</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('importZipDialog').classList.remove('open')">Cancel</button>
+                <button type="submit" class="btn-primary">Replace</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 
 <div class="dialog-container" id="templateTranslateDialog">
     <div class="dialog">

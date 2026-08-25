@@ -80,6 +80,7 @@ document.getElementById('newCategoryName').addEventListener('keydown', e => {
 
 function openNewTemplateDialog() {
     document.getElementById('newTemplateDialog').classList.add('open')
+    setNewTemplateMode('clone')
     setTimeout(() => document.getElementById('newTemplateName').focus(), 50)
 }
 function closeNewTemplateDialog() {
@@ -88,3 +89,11 @@ function closeNewTemplateDialog() {
 document.getElementById('newTemplateName').addEventListener('keydown', e => {
     if (e.key === 'Escape') closeNewTemplateDialog()
 })
+
+function setNewTemplateMode(mode) {
+    const isZip = mode === 'zip'
+    document.getElementById('cloneTemplateForm').hidden = isZip
+    document.getElementById('zipTemplateForm').hidden = !isZip
+    document.getElementById('newTemplateModeCloneBtn').classList.toggle('active', !isZip)
+    document.getElementById('newTemplateModeZipBtn').classList.toggle('active', isZip)
+}

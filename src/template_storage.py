@@ -1,10 +1,13 @@
 import json
 import os
 import shutil
+import zipfile
 from types import SimpleNamespace
 from flask import current_app
 
 _ORDER_FILENAME = '.order.json'
+_ZIP_MAX_FILES = 200
+_ZIP_DEFAULT_MAX_SIZE = 20 * 1024 * 1024
 
 
 def _root_dir():
@@ -155,3 +158,83 @@ def delete_template(template_public_id):
     directory = os.path.join(_root_dir(), template_public_id)
     if os.path.isdir(directory):
         shutil.rmtree(directory)
+
+
+def _human_size(n):
+    size = float(n)
+    for unit in ('B', 'KB', 'MB', 'GB'):
+        if size < 1024 or unit == 'GB':
+            return f'{size:.0f} {unit}' if unit == 'B' else f'{size:.1f} {unit}'
+        size /= 1024
+
+
+def _common_leading_dir(names):
+    # If every entry in the zip shares the same top-level folder (e.g. it was zipped as
+    # "mytemplate/headers.hbs" rather than "headers.hbs"), strip that wrapper so a flat set of
+    # pages comes out either way. Any entry sitting at the zip root means there's no wrapper.
+    prefixes = set()
+    for name in names:
+        if '/' not in name:
+            return ''
+        prefixes.add(name.split('/', 1)[0])
+    if len(prefixes) == 1:
+        return prefixes.pop() + '/'
+    return ''
+
+
+def parse_template_zip(file_obj):
+    """Parses an uploaded .zip into a flat {filename: content} dict of .hbs/.css pages.
+    Raises ValueError with a user-facing message on any problem, so callers can just
+    flash(str(e)) without translating the failure themselves."""
+    try:
+        zf = zipfile.ZipFile(file_obj)
+    except zipfile.BadZipFile:
+        raise ValueError('That file is not a valid .zip archive.')
+
+    infos = [i for i in zf.infolist() if not i.is_dir() and not i.filename.endswith('/')]
+    if not infos:
+        raise ValueError('The zip archive is empty.')
+    if len(infos) > _ZIP_MAX_FILES:
+        raise ValueError(f'The zip archive has too many files (max {_ZIP_MAX_FILES}).')
+
+    max_size = _ZIP_DEFAULT_MAX_SIZE
+    try:
+        max_size = current_app.config.get('TEMPLATE_ZIP_MAX_UPLOAD_SIZE', _ZIP_DEFAULT_MAX_SIZE)
+    except RuntimeError:
+        pass  # no app context (e.g. a script calling this directly) - fall back to the default
+    total_size = sum(i.file_size for i in infos)
+    if total_size > max_size:
+        raise ValueError(f'The zip archive is too large (max {_human_size(max_size)}).')
+
+    common_prefix = _common_leading_dir([i.filename for i in infos])
+
+    pages = {}
+    for info in infos:
+        rel = info.filename[len(common_prefix):] if common_prefix else info.filename
+        if not rel or not (rel.endswith('.hbs') or rel.endswith('.css')):
+            continue  # skip non-page files (README, images, __MACOSX/, etc.)
+        if not _is_safe_filename(rel):
+            raise ValueError(f'Unsafe or nested filename in zip: {rel!r}. Pages must be flat '
+                             '(no subfolders), directly at the zip root or inside a single wrapping folder.')
+        try:
+            content = zf.read(info).decode('utf-8')
+        except UnicodeDecodeError:
+            raise ValueError(f'{rel} is not valid UTF-8 text.')
+        pages[rel] = content
+
+    if not pages:
+        raise ValueError('No .hbs or .css template pages found in the zip.')
+    return pages
+
+
+def replace_pages(template_public_id, pages):
+    """Wipes the template's current pages and writes the given {filename: content} dict in
+    their place. Callers are responsible for snapshotting a version first if the previous
+    content should stay recoverable."""
+    directory = _current_dir(template_public_id)
+    if os.path.isdir(directory):
+        shutil.rmtree(directory)
+    os.makedirs(directory, exist_ok=True)
+    for filename, content in pages.items():
+        with open(os.path.join(directory, filename), 'w', encoding='utf-8') as f:
+            f.write(content)

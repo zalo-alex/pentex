@@ -12,6 +12,9 @@ logs/
 .env.*
 llm-config.json
 
+# Fetched by the Dockerfile at a pinned version instead (see TINYMCE_VERSION)
+static/tinymce/
+
 # IDE
 .vscode/
 .idea/

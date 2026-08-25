@@ -456,7 +456,7 @@ def api_raw_page(template_id, filename):
 
 
 @templates_bp.route('/api/templates/<string:template_id>/pages/<path:filename>', methods=['PUT'])
-@admin_required
+@login_required
 def api_update_page(template_id, filename):
     tpl = Template.query.filter_by(public_id=template_id).first_or_404()
     _reject_clone(tpl)
@@ -575,6 +575,42 @@ def api_download_version(template_id, version_id):
     tpl_slug = re.sub(r'[^A-Za-z0-9_-]+', '_', version.template.name).strip('_') or 'template'
     download_name = f'{tpl_slug}_v{version.version_number}.zip'
     return send_file(buf, mimetype='application/zip', as_attachment=True, download_name=download_name)
+
+
+@templates_bp.route('/templates/<string:template_id>/import', methods=['POST'])
+@admin_required
+def import_template_zip(template_id):
+    tpl = Template.query.filter_by(public_id=template_id).first_or_404()
+    _reject_clone(tpl)
+
+    file = request.files.get('file')
+    if not file or not file.filename:
+        flash('Please choose a .zip file to upload.', 'error')
+        return redirect(url_for('templates_bp.edit', template_id=template_id))
+
+    try:
+        pages = template_storage.parse_template_zip(file.stream)
+    except ValueError as e:
+        flash(str(e), 'error')
+        return redirect(url_for('templates_bp.edit', template_id=template_id))
+
+    next_number = (db.session.query(db.func.max(TemplateVersion.version_number))
+                   .filter_by(template_id=tpl.id).scalar() or 0) + 1
+    version = TemplateVersion(
+        template_id=tpl.id, version_number=next_number, label='Auto-saved before zip import',
+        created_by_id=current_user.id, created_by_username=current_user.username,
+    )
+    db.session.add(version)
+    db.session.flush()
+    template_storage.snapshot_version(tpl.public_id, next_number)
+    db.session.commit()
+
+    template_storage.replace_pages(tpl.public_id, pages)
+
+    add_log('TEMPLATE_IMPORT',
+           detail=f'{tpl.name} replaced from zip ({len(pages)} pages, previous content saved as v{next_number})')
+    flash(f'Replaced "{tpl.name}" from zip (previous content saved as version {next_number}).', 'info')
+    return redirect(url_for('templates_bp.edit', template_id=template_id))
 
 
 @templates_bp.route('/templates/assets/upload', methods=['POST'])

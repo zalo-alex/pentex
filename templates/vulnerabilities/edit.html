@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros/cvss.html" import render as cvss_table %}
+{% from "macros/flag.html" import render as flag %}
 
 {% block title %}Edit Vulnerability{% endblock %}
 
@@ -16,9 +17,17 @@
         <h1>Edit Vulnerability</h1>
         <div style="display:flex; gap:8px; align-items:center">
             {% if translation %}
-            <a href="{{ url_for('vulnerabilities.edit', id=translation.public_id) }}" class="btn-secondary">
+            <a href="{{ url_for('vulnerabilities.edit', id=translation.public_id) }}" class="btn-secondary" style="display:flex; align-items:center; gap:6px">
+                {{ flag(translation.language) }}
                 View {{ translation.language }} version
             </a>
+            {% if (vuln.language or 'FR') == 'FR' %}
+            <button type="button" class="btn-secondary" id="retranslateBtn" data-vuln-id="{{ vuln.public_id }}"
+                    data-target-lang="{{ translation.language }}" data-force="true" onclick="openTranslateDialog(this)"
+                    title="Regenerate the {{ translation.language }} version from this vulnerability's current content">
+                Retranslate
+            </button>
+            {% endif %}
             {% else %}
             <button type="button" class="btn-secondary" id="translateBtn" data-vuln-id="{{ vuln.public_id }}"
                     data-target-lang="{{ 'FR' if (vuln.language or 'EN') == 'EN' else 'EN' }}" onclick="openTranslateDialog(this)">

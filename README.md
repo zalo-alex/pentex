@@ -18,12 +18,25 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
+```
 
+TinyMCE (self-hosted, GPL build) is gitignored and not committed to the repo — download it once and unpack it into `static/tinymce`:
+
+```bash
+curl -fsSL https://download.tiny.cloud/tinymce/community/tinymce_8.8.2.zip -o /tmp/tinymce.zip
+unzip -q /tmp/tinymce.zip -d /tmp/tinymce_extract
+mv /tmp/tinymce_extract/tinymce/js/tinymce static/tinymce
+rm -rf /tmp/tinymce.zip /tmp/tinymce_extract
+```
+
+```bash
 flask db upgrade
 python app.py
 ```
 
 The app runs on `http://localhost:5000`. On first startup a temporary admin password is printed to the console.
+
+Building the Docker image instead? It fetches TinyMCE itself (pinned via `TINYMCE_VERSION` in the Dockerfile) — no manual step needed, see below.
 
 ## Environment variables
 
@@ -55,6 +68,16 @@ Vulnerability and template-page translation call out to an OpenAI-compatible cha
 ```
 
 `baseURL` is queried at `<baseURL>/chat/completions`; `model` is sent as `<model-name>` (everything after the first `/`).
+
+## Docker
+
+```bash
+docker compose up -d --build
+```
+
+Builds the image (fetching TinyMCE and Playwright's Chromium itself) and starts the app on `http://localhost:5000`, persisting `instance/` and `logs/` to the host via bind mounts. Override `SECRET_KEY`, `FLASK_DEBUG`, `ALLOWED_ORIGIN`, `LOG_LEVEL` with a `.env` file (same variables as above). To enable AI translation, uncomment the `llm-config.json` mount in `docker-compose.yml` once that file exists on the host.
+
+Without compose: `docker build -t pentex . && docker run -p 5000:5000 -e SECRET_KEY=<random-secret> -v ./instance:/app/instance -v ./logs:/app/logs pentex`.
 
 ## Project structure
 

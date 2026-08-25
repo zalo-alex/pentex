@@ -7,6 +7,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# TinyMCE (self-hosted GPL build) is gitignored and not committed to the repo
+# (see README), so fetch the pinned version directly instead of relying on it
+# being present in the build context. static/tinymce/ is dockerignored so
+# COPY . . below can't shadow this with a stale local copy.
+ARG TINYMCE_VERSION=8.8.2
+RUN curl -fsSL "https://download.tiny.cloud/tinymce/community/tinymce_${TINYMCE_VERSION}.zip" -o /tmp/tinymce.zip \
+    && unzip -q /tmp/tinymce.zip -d /tmp/tinymce_extract \
+    && mkdir -p static \
+    && mv /tmp/tinymce_extract/tinymce/js/tinymce static/tinymce \
+    && rm -rf /tmp/tinymce.zip /tmp/tinymce_extract
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && playwright install --with-deps chromium

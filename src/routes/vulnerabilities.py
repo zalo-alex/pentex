@@ -255,16 +255,18 @@ def edit(id):
                            cvss=_parse_cvss_vector(vuln.cvss_vector), categories=categories)
 
 
-def _get_or_create_translation(vuln, created_by_id):
+def _get_or_create_translation(vuln, created_by_id, force=False):
     """Returns (translated_vuln, created_bool). Reuses an existing paired translation
-    if one exists; otherwise generates it via the LLM and links the pair."""
+    if one exists, unless force is set — in which case it's regenerated in place;
+    otherwise generates it via the LLM and links the pair."""
     target_language = 'FR' if (vuln.language or 'FR') == 'EN' else 'EN'
 
+    existing = None
     if vuln.translation_group_id:
         existing = Vulnerability.query.filter_by(
             translation_group_id=vuln.translation_group_id, language=target_language
         ).first()
-        if existing:
+        if existing and not force:
             return existing, False
 
     source_content = {
@@ -275,11 +277,29 @@ def _get_or_create_translation(vuln, created_by_id):
         'remediation': vuln.remediation or '',
     }
     translated_fields = translate_vulnerability_fields(source_content, vuln.language or 'FR', target_language)
+    translated_fields['references_html'] = vuln.references or ''
+
+    if existing:
+        existing.name = (translated_fields['title'] or '').strip() or 'Untitled'
+        existing.description = translated_fields['description']
+        existing.observation = translated_fields['observation']
+        existing.references = translated_fields['references_html']
+        existing.classification = translated_fields['vulnType']
+        existing.remediation = translated_fields['remediation']
+        existing.cvss_vector = vuln.cvss_vector or ''
+        existing.cvss_score = vuln.cvss_score
+        existing.severity = vuln.severity
+        existing.remediation_complexity = vuln.remediation_complexity
+        existing.remediation_priority = vuln.remediation_priority
+        existing.category_id = vuln.category_id
+        existing.language = target_language
+        db.session.commit()
+        add_log('VULN_RETRANSLATE', detail=f'{vuln.name} -> {target_language}')
+        return existing, False
 
     group_id = vuln.translation_group_id or str(uuid.uuid4())
     vuln.translation_group_id = group_id
 
-    translated_fields['references_html'] = vuln.references or ''
     new_vuln = _build_vuln(
         translated_fields,
         cvss_vector=vuln.cvss_vector,
@@ -303,8 +323,12 @@ def api_translate(id):
     if vuln.created_by_id and vuln.created_by_id != current_user.id and not current_user.is_admin:
         abort(403)
 
+    force = bool((request.get_json(silent=True) or {}).get('force'))
+    if force and (vuln.language or 'FR') != 'FR':
+        abort(400, description='Retranslate can only be initiated from the French version.')
+
     try:
-        result_vuln, created = _get_or_create_translation(vuln, current_user.id)
+        result_vuln, created = _get_or_create_translation(vuln, current_user.id, force=force)
     except TranslationError as e:
         return jsonify({'error': str(e)}), 502
 

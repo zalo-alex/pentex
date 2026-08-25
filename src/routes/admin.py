@@ -211,6 +211,35 @@ def create_template():
     return redirect(url_for('admin_bp.index'))
 
 
+@admin_bp.route('/admin/templates/create-from-zip', methods=['POST'])
+@admin_required
+def create_template_from_zip():
+    name = request.form.get('name', '').strip()
+    if not name or Template.query.filter_by(name=name).first():
+        flash('Template name is required and must be unique.', 'error')
+        return redirect(url_for('admin_bp.index'))
+
+    file = request.files.get('file')
+    if not file or not file.filename:
+        flash('Please choose a .zip file to upload.', 'error')
+        return redirect(url_for('admin_bp.index'))
+
+    try:
+        pages = template_storage.parse_template_zip(file.stream)
+    except ValueError as e:
+        flash(str(e), 'error')
+        return redirect(url_for('admin_bp.index'))
+
+    tpl = Template(name=name, is_default=False)
+    db.session.add(tpl)
+    db.session.flush()  # get tpl.public_id before writing to disk
+    template_storage.replace_pages(tpl.public_id, pages)
+    db.session.commit()
+    add_log('TEMPLATE_CREATE', detail=f'{name} (imported from zip, {len(pages)} pages)')
+    flash(f'Created "{name}" from zip.', 'info')
+    return redirect(url_for('admin_bp.index'))
+
+
 @admin_bp.route('/admin/templates/<string:tpl_id>/delete', methods=['POST'])
 @admin_required
 def delete_template(tpl_id):

@@ -35,6 +35,11 @@ document.querySelector('form').addEventListener('submit', () => {
 window.openTranslateDialog = async (btn) => {
     const vulnId = btn.dataset.vulnId
     const targetLang = btn.dataset.targetLang
+    const force = btn.dataset.force === 'true'
+
+    if (force && !confirm(`Regenerate the ${targetLang} version from this vulnerability's current content? This overwrites its existing translation.`)) {
+        return
+    }
 
     document.getElementById('translateDialogTitle').textContent = `Translating to ${targetLang}…`
     document.getElementById('translateStatusText').textContent = 'Contacting translation service…'
@@ -44,7 +49,9 @@ window.openTranslateDialog = async (btn) => {
 
     try {
         const res = await fetch(`/api/vulnerabilities/${vulnId}/translate`, {
-            method: 'POST', headers: { 'X-CSRFToken': csrfToken() }
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ force })
         })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
