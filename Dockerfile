@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl unzip \
+    && apt-get install -y --no-install-recommends curl unzip gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # TinyMCE (self-hosted GPL build) is gitignored and not committed to the repo
@@ -33,11 +33,17 @@ COPY . .
 RUN mkdir -p instance logs \
     && useradd --create-home --shell /bin/bash appuser \
     && chown -R appuser:appuser /app /opt/playwright-browsers
-USER appuser
+
+RUN chmod +x entrypoint.sh
 
 EXPOSE 5000
 
 # SECRET_KEY, ALLOWED_ORIGIN, FLASK_DEBUG, LOG_LEVEL are read from the
 # environment at startup (see README) — pass them via `docker run -e` /
 # `--env-file` / compose, not baked into the image.
+#
+# Container starts as root so the entrypoint can fix ownership of the
+# instance/ and logs/ bind mounts (docker-compose creates them as root) before
+# dropping to appuser via gosu.
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "app.py"]
