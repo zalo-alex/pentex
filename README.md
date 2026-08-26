@@ -79,6 +79,18 @@ Builds the image (fetching TinyMCE and Playwright's Chromium itself) and starts 
 
 Without compose: `docker build -t pentex . && docker run -p 5000:5000 -e SECRET_KEY=<random-secret> -v ./instance:/app/instance -v ./logs:/app/logs pentex`.
 
+### Resetting the admin password
+
+If you lose the initial admin password, generate a new one in the running container:
+
+```bash
+docker compose exec app python app.py --reset-admin-password
+```
+
+(without compose: `docker exec <container> python app.py --reset-admin-password`)
+
+The new password is printed to the container logs (`docker compose logs app`) and written to `logs/pentex.log`.
+
 ## Project structure
 
 ```
