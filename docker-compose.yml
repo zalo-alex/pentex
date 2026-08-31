@@ -6,8 +6,13 @@ services:
     environment:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       FLASK_DEBUG: ${FLASK_DEBUG:-false}
-      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:5000}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-https://localhost:5000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Optional: paths (inside the container) to a real TLS cert/key. Leave
+      # unset to auto-generate (and reuse) a self-signed one under
+      # instance/certs/ — see README's "HTTPS" section.
+      SSL_CERT_FILE: ${SSL_CERT_FILE:-}
+      SSL_KEY_FILE: ${SSL_KEY_FILE:-}
     volumes:
       - ./instance:/app/instance
       - ./logs:/app/logs
@@ -16,4 +21,7 @@ services:
       # an empty directory at the target if the source file is missing, which
       # breaks the app's config loader.
       # - ./llm-config.json:/app/llm-config.json:ro
+      # Optional: mount your own TLS cert/key and set SSL_CERT_FILE/SSL_KEY_FILE
+      # above to their in-container paths, e.g.:
+      # - ./certs:/app/certs:ro
     restart: unless-stopped

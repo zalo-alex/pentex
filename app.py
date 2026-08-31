@@ -16,6 +16,7 @@ from src.routes.templates import templates_bp
 from src.routes.admin import admin_bp
 from src.template_seed import seed_default_template
 from src.logging_config import configure_logging, print_banner
+from src.ssl_utils import get_ssl_context
 
 load_dotenv()
 
@@ -33,7 +34,7 @@ csrf = CSRFProtect(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)
-allowed_origin = os.environ.get('ALLOWED_ORIGIN', 'http://localhost:5000')
+allowed_origin = os.environ.get('ALLOWED_ORIGIN', 'https://localhost:5000')
 socketio = SocketIO(app, cors_allowed_origins=allowed_origin)
 
 login_manager = LoginManager(app)
@@ -222,6 +223,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    certfile, keyfile = get_ssl_context()
     print_banner()
-    logger.info('PENTEX starting on 0.0.0.0:5000 (debug=%s)', debug)
-    socketio.run(app, host="0.0.0.0", debug=debug)
+    logger.info('PENTEX starting on https://0.0.0.0:5000 (debug=%s)', debug)
+    socketio.run(app, host="0.0.0.0", debug=debug, certfile=certfile, keyfile=keyfile)

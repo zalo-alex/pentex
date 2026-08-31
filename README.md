@@ -34,7 +34,7 @@ flask db upgrade
 python app.py
 ```
 
-The app runs on `http://localhost:5000`. On first startup a temporary admin password is printed to the console.
+The app runs on `https://localhost:5000` (see "HTTPS" below). On first startup a temporary admin password is printed to the console.
 
 Building the Docker image instead? It fetches TinyMCE itself (pinned via `TINYMCE_VERSION` in the Dockerfile) — no manual step needed, see below.
 
@@ -45,9 +45,15 @@ Create a `.env` file at the project root:
 ```env
 SECRET_KEY=<random-secret>
 FLASK_DEBUG=false
-ALLOWED_ORIGIN=http://localhost:5000
+ALLOWED_ORIGIN=https://localhost:5000
 LOG_LEVEL=INFO
+SSL_CERT_FILE=
+SSL_KEY_FILE=
 ```
+
+## HTTPS
+
+The app always serves over TLS. Provide your own certificate via `SSL_CERT_FILE` / `SSL_KEY_FILE` in `.env` (paths to a PEM cert and key); if either is unset, a self-signed certificate is generated automatically on first startup and saved to `instance/certs/` for reuse on subsequent restarts (since `instance/` persists on disk / is bind-mounted in Docker). Browsers will show a trust warning for the self-signed cert — expected for local/internal use; supply a real certificate for anything public-facing.
 
 ## AI translation settings (optional)
 
@@ -75,7 +81,7 @@ Vulnerability and template-page translation call out to an OpenAI-compatible cha
 docker compose up -d --build
 ```
 
-Builds the image (fetching TinyMCE and Playwright's Chromium itself) and starts the app on `http://localhost:5000`, persisting `instance/` and `logs/` to the host via bind mounts. Override `SECRET_KEY`, `FLASK_DEBUG`, `ALLOWED_ORIGIN`, `LOG_LEVEL` with a `.env` file (same variables as above). To enable AI translation, uncomment the `llm-config.json` mount in `docker-compose.yml` once that file exists on the host.
+Builds the image (fetching TinyMCE and Playwright's Chromium itself) and starts the app on `https://localhost:5000` (self-signed cert auto-generated into `instance/certs/` unless `SSL_CERT_FILE`/`SSL_KEY_FILE` point at a mounted cert — see "HTTPS" above), persisting `instance/` and `logs/` to the host via bind mounts. Override `SECRET_KEY`, `FLASK_DEBUG`, `ALLOWED_ORIGIN`, `LOG_LEVEL`, `SSL_CERT_FILE`, `SSL_KEY_FILE` with a `.env` file (same variables as above). To enable AI translation, uncomment the `llm-config.json` mount in `docker-compose.yml` once that file exists on the host.
 
 Without compose: `docker build -t pentex . && docker run -p 5000:5000 -e SECRET_KEY=<random-secret> -v ./instance:/app/instance -v ./logs:/app/logs pentex`.
 
@@ -98,6 +104,7 @@ app.py                  Flask app, Socket.IO handlers, blueprint registration
 src/
   models.py             SQLAlchemy models (User, Report, Vulnerability, InviteToken, Log)
   log.py                Audit logging helper
+  ssl_utils.py          TLS cert resolution / self-signed cert generation
   routes/
     auth.py             Login, logout, password change, invite flow
     reports.py          Report CRUD + /api/reports JSON API
